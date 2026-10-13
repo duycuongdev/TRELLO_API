@@ -72,7 +72,7 @@ const update = async (cardId, updateData) => {
       { _id: new ObjectId(cardId) },
       { $set: updateData },
       // trả về kết quả mới sau khi cập nhật
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
 
     return result
