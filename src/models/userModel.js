@@ -76,6 +76,7 @@ const update = async (userId, updateData) => {
 }
 
 export const userModel = {
+  USER_COLLECTION_NAME,
   createNew,
   findOneById,
   findOneByEmail,

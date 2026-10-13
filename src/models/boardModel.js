@@ -6,6 +6,7 @@ import { BOARD_TYPES } from '~/utils/constants'
 import { columnModel } from './columnModel'
 import { cardModel } from './cardModel'
 import { pagingSkipValue } from '~/utils/algorithms'
+import { userModel } from './userModel'
 
 const BOARD_COLLECTION_NAME = 'boards'
 const BOARD_COLLECTION_SCHEMA = Joi.object({
@@ -92,6 +93,25 @@ const getDetails = async (userId, boardId) => {
           foreignField: 'boardId',
           as: 'cards'
         }
+      },
+      {
+        $lookup: {
+          from: userModel.USER_COLLECTION_NAME,
+          localField: 'ownerIds',
+          foreignField: '_id',
+          as: 'owners',
+          pipeline: [{ $project: { 'password': 0, 'verifyToken': 0 } }]
+        }
+      },
+      {
+        $lookup: {
+          from: userModel.USER_COLLECTION_NAME,
+          localField: 'memberIds',
+          foreignField: '_id',
+          as: 'members',
+
+          pipeline: [{ $project: { 'password': 0, 'verifyToken': 0 } }]
+        }
       }
     ]).toArray()
     return result[0] || null
@@ -104,7 +124,7 @@ const pushColumnOrderIds = async (column) => {
     const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(column.boardId) },
       { $push: { columnOrderIds: new ObjectId(column._id) } },
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
 
     return result
@@ -118,7 +138,7 @@ const pullColumnOrderIds = async (column) => {
     const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(column.boardId) },
       { $pull: { columnOrderIds: new ObjectId(column._id) } },
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
 
     return result
@@ -143,7 +163,7 @@ const update = async (boardId, updateData) => {
       { _id: new ObjectId(boardId) },
       { $set: updateData },
       // trả về kết quả mới sau khi cập nhật
-      { ReturnDocument: 'after' }
+      { returnDocument: 'after' }
     )
 
     return result
