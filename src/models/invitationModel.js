@@ -113,7 +113,7 @@ const update = async (invitationId, updateData) => {
 const findByUser = async (userId) => {
   try {
     const queryConditions = [
-      { inviterId: new ObjectId(userId) },
+      { inviteeId: new ObjectId(userId) },
       { _destroy: false }
     ]
 

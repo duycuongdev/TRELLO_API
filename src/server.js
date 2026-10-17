@@ -8,6 +8,9 @@ import { errorHandlingMiddleware } from './middlewares/errorHandlingMiddleware'
 import cors from 'cors'
 import { corsOptions } from './config/cors'
 import cookieParser from 'cookie-parser'
+import socketIo from 'socket.io'
+import http from 'http'
+import { inviteUserToBoardSocket } from './sockets/inviteUserToBoardSocket'
 
 const START_SERVER = () => {
   const app = express()
@@ -34,12 +37,21 @@ const START_SERVER = () => {
   // midleware xử lý lỗi tập chung
   app.use(errorHandlingMiddleware)
 
+  // create new server nested in express app
+  const server = http.createServer(app)
+
+  // create new socket.io server
+  const io = new socketIo.Server(server, { cors: corsOptions })
+  io.on('connection', (socket) => {
+    inviteUserToBoardSocket(socket)
+  })
+
   if (env.BUILD_MODE === 'production') {
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
       console.log(`Production Hello ${env.AUTHOR}, Back-end sever is running successfully at Port ${process.env.PORT}`)
     })
   } else {
-    app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+    server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
       console.log(`Local Dev Hello ${env.AUTHOR}, Back-end sever is running successfully at Host ${env.LOCAL_DEV_APP_HOST} and Port: ${env.LOCAL_DEV_APP_PORT}`)
     })
   }

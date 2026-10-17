@@ -71,7 +71,48 @@ const getInvitations = async (userId) => {
   } catch (error) { throw error }
 }
 
+const updateBoardInvitation = async (userId, invitationId, status) => {
+  try {
+    // Tìm bản ghi invitation trong model
+    const getInvitation = await invitationModel.findOneById(invitationId)
+    if (!getInvitation) throw new ApiError(StatusCodes.NOT_FOUND, 'Invitation not found!')
+
+    // Sau khi có Invitation rồi thì lấy full thông tin của board
+    const boardId = getInvitation.boardInvitation.boardId
+    const getBoard = await boardModel.findOneById(boardId)
+    if (!getBoard) throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found!')
+
+    // Kiểm tra xem nếu status là ACCEPTED join board mà cái thằng user (invitee) đã là owner hoặc member của
+    // board rồi thì trả về thông báo lỗi luôn.
+    // Note: 2 mảng memberIds và ownerIds của board nó đang là kiểu dữ liệu ObjectId nên cho nó về String hết
+    // luôn để check
+    const boardOwnerAndMemberIds = [...getBoard.ownerIds, ...getBoard.memberIds].toString()
+    if (status === BOARD_INVITATION_STATUS.ACCEPTED && boardOwnerAndMemberIds.includes(userId)) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'You are already a member of this board!')
+    }
+
+    // create data to update invitation
+    const updateData = {
+      boardInvitation: {
+        ...getInvitation.boardInvitation,
+        status: status
+      }
+    }
+
+    // b1: update invitation status
+    const updatedInvitation = await invitationModel.update(invitationId, updateData)
+
+    // b2: if status is ACCEPTED then add user to board memberIds
+    if (updatedInvitation.boardInvitation.status === BOARD_INVITATION_STATUS.ACCEPTED) {
+      await boardModel.pushMemberIds(boardId, userId)
+    }
+
+    return updatedInvitation
+  } catch (error) { throw error }
+}
+
 export const invitationService = {
   createNewBoardInvitation,
-  getInvitations
+  getInvitations,
+  updateBoardInvitation
 }
