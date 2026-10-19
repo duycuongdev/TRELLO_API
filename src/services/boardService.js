@@ -18,8 +18,6 @@ const createNew = async (userId, reqBody) => {
 
     // gọi tới tâng Model để xử lý lưu bản ghi newBoard vào trong database
     const createBoard = await boardModel.createNew(userId, newBoard)
-    // eslint-disable-next-line no-console
-    console.log(createBoard)
 
     const getNewBoard = await boardModel.findOneById(createBoard.insertedId)
 

@@ -43,6 +43,9 @@ const update = async (cardId, reqBody, cardCoverFile, userInfo) => {
       updatedCard = await cardModel.unshiftNewComment(cardId, commentData)
     } else if (updateData.incomingMemberInfor) {
       updatedCard = await cardModel.updateMembers(cardId, updateData.incomingMemberInfor)
+    } else if (updateData.incomingChecklistInfo) {
+      // Xử lý tất cả các action liên quan đến Checklist
+      updatedCard = await cardModel.updateChecklists(cardId, updateData.incomingChecklistInfo)
     } else {
       updatedCard = await cardModel.update(cardId, updateData)
     }
