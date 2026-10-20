@@ -12,6 +12,7 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
   title: Joi.string().required().min(3).max(50).trim().strict(),
   description: Joi.string().optional(),
   cover: Joi.string().default(null),
+  dueDate: Joi.date().timestamp('javascript').allow(null).default(null),
   memberIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),
@@ -28,11 +29,11 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
   // Dữ liệu checklists nhúng (embedded) vào card, mỗi checklist có nhiều items
   checklists: Joi.array().items(
     Joi.object({
-      id: Joi.string().required(),         // uuid - unique id của checklist
+      id: Joi.string().required(), // uuid - unique id của checklist
       title: Joi.string().required().trim(), // tên checklist
       items: Joi.array().items(
         Joi.object({
-          id: Joi.string().required(),       // uuid - unique id của item
+          id: Joi.string().required(), // uuid - unique id của item
           title: Joi.string().required().trim(), // nội dung item
           isCompleted: Joi.boolean().default(false) // đã hoàn thành chưa
         })
