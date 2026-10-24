@@ -31,6 +31,8 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
       ).default([])
     })
   ).default([]),
+  dueDate: Joi.date().timestamp('javascript').allow(null).default(null),
+  isDueDateComplete: Joi.boolean().default(false),
   memberIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),

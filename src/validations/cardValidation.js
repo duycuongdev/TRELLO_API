@@ -41,7 +41,9 @@ const update = async (req, res, next) => {
           })
         ).default([])
       })
-    ).optional()
+    ).optional(),
+    dueDate: Joi.date().timestamp('javascript').allow(null).optional(),
+    isDueDateComplete: Joi.boolean().optional()
   })
 
   try {
