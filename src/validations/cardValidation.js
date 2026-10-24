@@ -43,7 +43,17 @@ const update = async (req, res, next) => {
       })
     ).optional(),
     dueDate: Joi.date().timestamp('javascript').allow(null).optional(),
-    isDueDateComplete: Joi.boolean().optional()
+    isDueDateComplete: Joi.boolean().optional(),
+    attachments: Joi.array().items(
+      Joi.object({
+        _id: Joi.string().required(),
+        fileName: Joi.string().required(),
+        fileUrl: Joi.string().required(),
+        fileType: Joi.string().allow('').optional(),
+        fileSize: Joi.number().optional(),
+        uploadedAt: Joi.date().timestamp('javascript').default(Date.now)
+      })
+    ).optional()
   })
 
   try {

@@ -33,6 +33,16 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
   ).default([]),
   dueDate: Joi.date().timestamp('javascript').allow(null).default(null),
   isDueDateComplete: Joi.boolean().default(false),
+  attachments: Joi.array().items(
+    Joi.object({
+      _id: Joi.string().required(),
+      fileName: Joi.string().required(),
+      fileUrl: Joi.string().required(),
+      fileType: Joi.string().allow('').optional(),
+      fileSize: Joi.number().optional(),
+      uploadedAt: Joi.date().timestamp('javascript').default(Date.now)
+    })
+  ).default([]),
   memberIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),
@@ -121,6 +131,30 @@ const unshiftNewComment = async (cardId, commentData) => {
   } catch (error) { throw new Error(error) }
 }
 
+// Thêm tệp đính kèm mới vào vị trí đầu mảng attachments
+const unshiftNewAttachment = async (cardId, attachmentData) => {
+  try {
+    const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(cardId) },
+      { $push: { attachments: { $each: [attachmentData], $position: 0 } } },
+      { returnDocument: 'after' }
+    )
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
+// Xóa tệp đính kèm theo attachmentId
+const deleteAttachment = async (cardId, attachmentId) => {
+  try {
+    const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(cardId) },
+      { $pull: { attachments: { _id: attachmentId } } },
+      { returnDocument: 'after' }
+    )
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
 const updateMembers = async (cardId, incomingMemberInfo) => {
   try {
     // Tạo ra một biến updateCondition ban đầu là rỗng
@@ -165,6 +199,8 @@ export const cardModel = {
   update,
   deleteManyByColumnId,
   unshiftNewComment,
+  unshiftNewAttachment,
+  deleteAttachment,
   deleteOneById,
   updateMembers
 }

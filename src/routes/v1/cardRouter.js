@@ -22,4 +22,18 @@ Router.route('/:id')
     cardController.deleteItem
   )
 
+// Xử lý tệp đính kèm (Attachments)
+Router.route('/:id/attachments')
+  .post(
+    authMiddleware.isAuthorized,
+    multerUploadMiddleware.uploadAttachment.single('attachment'),
+    cardController.addAttachment
+  )
+
+Router.route('/:id/attachments/:attachmentId')
+  .delete(
+    authMiddleware.isAuthorized,
+    cardController.deleteAttachment
+  )
+
 export const cardRouter = Router

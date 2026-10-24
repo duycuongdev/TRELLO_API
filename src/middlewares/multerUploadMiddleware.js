@@ -3,10 +3,8 @@ import { LIMIT_COMMON_FILE_SIZE, ALLOW_COMMON_FILE_TYPES } from '../utils/valida
 import ApiError from '../utils/ApiError.js'
 import { StatusCodes } from 'http-status-codes'
 
-// function check which file type is allowed
+// function check which file type is allowed for avatars & covers
 const customeFileFilter = (req, file, callback) => {
-  // console.log('file', file)
-
   // check file use mimetype
   if (!ALLOW_COMMON_FILE_TYPES.includes(file.mimetype)) {
     const errorMessage = 'File type is invalid. Only accept jpg, jpeg and png'
@@ -22,4 +20,15 @@ const upload = multer({
   fileFilter: customeFileFilter
 })
 
-export const multerUploadMiddleware = { upload }
+// function upload attachments (hỗ trợ ảnh, pdf, docx, excel, zip...)
+const uploadAttachment = multer({
+  limits: { fileSize: LIMIT_COMMON_FILE_SIZE },
+  fileFilter: (req, file, callback) => {
+    return callback(null, true)
+  }
+})
+
+export const multerUploadMiddleware = {
+  upload,
+  uploadAttachment
+}

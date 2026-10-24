@@ -54,6 +54,30 @@ const update = async (cardId, reqBody, cardCoverFile, userInfo) => {
   } catch (error) { throw error }
 }
 
+const addAttachment = async (cardId, file) => {
+  try {
+    if (!file) throw new ApiError(StatusCodes.BAD_REQUEST, 'Please select a file to upload!')
+    const uploadResult = await cloudinaryProvider.streamUpload(file.buffer, 'cardAttachments')
+    const attachmentData = {
+      _id: Date.now().toString(),
+      fileName: file.originalname,
+      fileUrl: uploadResult.secure_url,
+      fileType: file.mimetype,
+      fileSize: file.size,
+      uploadedAt: Date.now()
+    }
+    const updatedCard = await cardModel.unshiftNewAttachment(cardId, attachmentData)
+    return updatedCard
+  } catch (error) { throw error }
+}
+
+const deleteAttachment = async (cardId, attachmentId) => {
+  try {
+    const updatedCard = await cardModel.deleteAttachment(cardId, attachmentId)
+    return updatedCard
+  } catch (error) { throw error }
+}
+
 const deleteItem = async (cardId, userId) => {
   try {
     const targetCard = await cardModel.findOneById(cardId)
@@ -85,5 +109,7 @@ const deleteItem = async (cardId, userId) => {
 export const cardService = {
   createNew,
   update,
+  addAttachment,
+  deleteAttachment,
   deleteItem
 }
