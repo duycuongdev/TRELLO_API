@@ -30,6 +30,39 @@ const requireBoardMember = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const requireBoardOwner = async (req, res, next) => {
+  try {
+    const userId = req.jwtDecoded._id
+    const board = req.board || await loadBoard(req.params.id, userId)
+    const isOwner = (board.ownerIds || []).some(id => id.toString() === userId.toString())
+    if (!isOwner) throw new ApiError(StatusCodes.FORBIDDEN, 'You must be the board owner to perform this action!')
+    req.board = board
+    next()
+  } catch (error) { next(error) }
+}
+
+const requireCardMemberBelongsToBoard = async (req, res, next) => {
+  try {
+    let incomingMemberInfo = req.body.incomingMemberInfor
+    if (!incomingMemberInfo) return next()
+    if (typeof incomingMemberInfo === 'string') {
+      try { incomingMemberInfo = JSON.parse(incomingMemberInfo) } catch {
+        throw new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, 'Invalid card member data')
+      }
+    }
+    if (!validId(incomingMemberInfo.userId)) {
+      throw new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, 'Invalid card member ID')
+    }
+    const board = req.board
+    const boardUserIds = [...(board.ownerIds || []), ...(board.memberIds || [])]
+    const belongsToBoard = boardUserIds.some(id => id.toString() === incomingMemberInfo.userId.toString())
+    if (!belongsToBoard) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'Card member must belong to the board!')
+    }
+    next()
+  } catch (error) { next(error) }
+}
+
 const requireColumnBoardMember = async (req, res, next) => {
   try {
     let boardId = req.body.boardId
@@ -91,8 +124,10 @@ const requireMoveCardBoardMember = async (req, res, next) => {
 
 export const authorizationMiddleware = {
   requireBoardMember,
+  requireBoardOwner,
   requireColumnBoardMember,
   requireCardBoardMember,
+  requireCardMemberBelongsToBoard,
   requireInviterIsBoardMember,
   requireMoveCardBoardMember
 }

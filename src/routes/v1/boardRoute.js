@@ -4,7 +4,7 @@ import { boardController } from '~/controllers/boardController'
 import { authMiddleware } from '~/middlewares/authMiddleware'
 import { authorizationMiddleware } from '~/middlewares/authorizationMiddleware'
 
-const { requireBoardMember, requireMoveCardBoardMember } = authorizationMiddleware
+const { requireBoardMember, requireBoardOwner, requireMoveCardBoardMember } = authorizationMiddleware
 
 const Router = express.Router()
 
@@ -14,7 +14,7 @@ Router.route('/')
 
 Router.route('/:id')
   .get(authMiddleware.isAuthorized, requireBoardMember, boardController.getDetails)
-  .put(authMiddleware.isAuthorized, requireBoardMember, boardValidation.update, boardController.update)
+  .put(authMiddleware.isAuthorized, requireBoardMember, requireBoardOwner, boardValidation.update, boardController.update)
 
 Router.route('/supports/moving_card')
   .put(authMiddleware.isAuthorized, requireMoveCardBoardMember, boardValidation.moveCardToDifferentColumn, boardController.moveCardToDifferentColumn)
