@@ -177,10 +177,11 @@ const getBoards = async (userId, page, itemsPerPage, queryFilter) => {
       }
     ]
 
-    // query filter search by title
+    // query filter search by title (escape regex to prevent ReDoS / syntax errors)
     if (queryFilter) {
       Object.keys(queryFilter).forEach(key => {
-        queryConditions.push({ [key]: { $regex: new RegExp(queryFilter[key], 'i') } })
+        const sanitizedValue = String(queryFilter[key]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        queryConditions.push({ [key]: { $regex: new RegExp(sanitizedValue, 'i') } })
       })
     }
 

@@ -11,7 +11,6 @@ const createNew = async (reqBody) => {
     const getNewCard = await cardModel.findOneById(createCard.insertedId)
 
     if (getNewCard) {
-      // cập nhật mảng cardOrderIds trong collection boards
       await columnModel.pushCardOrderIds(getNewCard)
     }
 
@@ -38,11 +37,12 @@ const update = async (cardId, reqBody, cardCoverFile, userInfo) => {
         ...updateData.commentToAdd,
         userId: userInfo._id,
         userEmail: userInfo.email,
-        createdAt: Date.now()
+        commentedAt: Date.now()
       }
       updatedCard = await cardModel.unshiftNewComment(cardId, commentData)
-    } else if (updateData.incomingMemberInfor) {
-      updatedCard = await cardModel.updateMembers(cardId, updateData.incomingMemberInfor)
+    } else if (updateData.incomingMemberInfo || updateData.incomingMemberInfor) {
+      const memberInfo = updateData.incomingMemberInfo || updateData.incomingMemberInfor
+      updatedCard = await cardModel.updateMembers(cardId, memberInfo)
     } else {
       updatedCard = await cardModel.update(cardId, updateData)
     }
