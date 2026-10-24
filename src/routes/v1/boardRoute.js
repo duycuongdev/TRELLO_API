@@ -16,4 +16,7 @@ Router.route('/:id')
 Router.route('/supports/moving_card')
   .put(authMiddleware.isAuthorized, boardValidation.moveCardToDifferentColumn, boardController.moveCardToDifferentColumn)
 
+Router.route('/:boardId/members/:userId')
+  .delete(authMiddleware.isAuthorized, boardValidation.removeMember, boardController.removeMember)
+
 export const boardRouter = Router

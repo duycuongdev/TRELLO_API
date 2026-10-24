@@ -29,7 +29,7 @@ const USER_COLLECTION_SCHEMA = Joi.object({
 })
 
 // Chỉ định ra những Fields mà chúng ta không muốn cho phép cập nhật trong hàm update()
-const INVALID_UPDATE_FIELDS = ['_id', 'email', 'username', 'createdAt']
+const INVALID_UPDATE_FIELDS = ['_id', 'email', 'username', 'role', 'isActive', 'verifyToken', 'createdAt']
 
 const validateBeforeCreate = async (data) => {
   return await USER_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false })

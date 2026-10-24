@@ -8,7 +8,6 @@ import { WEBSITE_DOMAINS } from '~/utils/constants'
 import { brevoProvider } from '~/providers/BrevoProvider'
 import { jwtProvider } from '~/providers/JwtProvider'
 import { env } from '~/config/environment'
-import JwtProvider from '~/providers/JwtProvider'
 import { cloudinaryProvider } from '~/providers/CloundinaryProvider'
 
 const createNew = async (reqBody) => {
@@ -39,7 +38,8 @@ const createNew = async (reqBody) => {
     const customSubject = 'Verify your email address'
     const htmlContent = `
       <h3>Verify your email address</h3>
-      <h3>${verifiCationLink}</h3>
+      <p>Click the link below to verify your account:</p>
+      <a href="${verifiCationLink}" target="_blank">${verifiCationLink}</a>
     `
 
     // gọi tới provider gửi email
@@ -90,14 +90,12 @@ const login = async (reqBody) => {
     const accessToken = jwtProvider.generateToken(
       userInfo,
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
-      // 5
       env.ACCESS_TOKEN_LIFE
     )
     const refreshToken = jwtProvider.generateToken(
       userInfo,
       env.REFRESH_TOKEN_SECRET_SIGNATURE,
       env.REFRESH_TOKEN_LIFE
-      // 15
     )
 
     // Trả về thông tin của user kèm theo 2 cái token vừa tạo ra
@@ -108,7 +106,7 @@ const login = async (reqBody) => {
 const refreshToken = async (clientRefreshToken) => {
   try {
     // Verify / giải mã cái refresh token xem có hợp lệ không
-    const refreshTokenDecoded = await JwtProvider.verifyToken(clientRefreshToken, env.REFRESH_TOKEN_SECRET_SIGNATURE)
+    const refreshTokenDecoded = await jwtProvider.verifyToken(clientRefreshToken, env.REFRESH_TOKEN_SECRET_SIGNATURE)
 
     // Đoạn này vì chúng ta chỉ lưu những thông tin unique và cố định của user trong token rồi, vì vậy có thể lấy luôn từ decoded ra, tiết kiệm query vào DB để lấy data mới.
     const userInfo = {
@@ -117,18 +115,17 @@ const refreshToken = async (clientRefreshToken) => {
     }
 
     // Tạo accessToken mới
-    const accessToken = await JwtProvider.generateToken(
+    const accessToken = await jwtProvider.generateToken(
       userInfo,
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
-      // 5 // 5 giây để test accessToken hết hạn
-      env.ACCESS_TOKEN_LIFE // 1 tiếng
+      env.ACCESS_TOKEN_LIFE
     )
 
     return { accessToken }
   } catch (error) { throw error }
 }
 
-const update = async(userId, reqBody, userAvatarFile) => {
+const update = async (userId, reqBody, userAvatarFile) => {
   try {
     // Query User và kiểm tra cho chắc chắn
     const existUser = await userModel.findOneById(userId)
@@ -149,15 +146,14 @@ const update = async(userId, reqBody, userAvatarFile) => {
     } else if (userAvatarFile) {
       // upload avatar file on cloudinary
       const uploadResult = await cloudinaryProvider.streamUpload(userAvatarFile.buffer, 'trello-users')
-      // console.log('uploadResult', uploadResult)
 
-      //  save avatar url to database
+      // save avatar url to database
       updatedUser = await userModel.update(existUser._id, { avatar: uploadResult.secure_url })
-
-    }
-    else {
-      // Trường hợp update thông tin chung chung (displayName, username, avatar, ...)
-      updatedUser = await userModel.update(existUser._id, reqBody)
+    } else {
+      // Trường hợp update thông tin chung chung (whitelist chỉ cho phép displayName)
+      const updateData = {}
+      if (reqBody.displayName) updateData.displayName = reqBody.displayName
+      updatedUser = await userModel.update(existUser._id, updateData)
     }
     return pickUser(updatedUser)
   } catch (error) { throw error }

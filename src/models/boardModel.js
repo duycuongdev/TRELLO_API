@@ -27,7 +27,7 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),
 
-  createAt: Joi.date().timestamp('javascript').default(Date.now),
+  createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp('javascript').default(null),
   // chỉ xóa phía người dùng, hệ thống vẫn còn
   _destroy: Joi.boolean().default(false)
@@ -74,8 +74,6 @@ const getDetails = async (userId, boardId) => {
       }
     ]
 
-    // giống hàm findOneById và sẽ cập nhật aggregate
-    // const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(id) })
     const result = await GET_DB().collection(BOARD_COLLECTION_NAME).aggregate([
       { $match: { $and: queryConditions } },
       {
@@ -109,7 +107,6 @@ const getDetails = async (userId, boardId) => {
           localField: 'memberIds',
           foreignField: '_id',
           as: 'members',
-
           pipeline: [{ $project: { 'password': 0, 'verifyToken': 0 } }]
         }
       }
@@ -132,7 +129,6 @@ const pushColumnOrderIds = async (column) => {
 }
 
 // lấy 1 phần tử columnId ra khỏi mảng columnOrderIds
-// dùng $pull trong mongodb ở trường hợp này để lấy 1 phần tử ra khỏi mảng rồi xóa nó đi
 const pullColumnOrderIds = async (column) => {
   try {
     const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
@@ -162,7 +158,6 @@ const update = async (boardId, updateData) => {
     const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(boardId) },
       { $set: updateData },
-      // trả về kết quả mới sau khi cập nhật
       { returnDocument: 'after' }
     )
 
@@ -173,10 +168,7 @@ const update = async (boardId, updateData) => {
 const getBoards = async (userId, page, itemsPerPage, queryFilter) => {
   try {
     const queryConditions = [
-      // condition 1: board not destroyed
       { _destroy: false },
-
-      // condition 2: user is owner or member of board
       {
         $or: [
           { ownerIds: { $all: [new ObjectId(userId)] } },
@@ -195,25 +187,17 @@ const getBoards = async (userId, page, itemsPerPage, queryFilter) => {
     const query = await GET_DB().collection(BOARD_COLLECTION_NAME).aggregate(
       [
         { $match: { $and: queryConditions } },
-
-        // sort title: sort a -> z but in ASCII B standinng in front of a
         { $sort: { title: 1 } },
-
-        // $facet: processing muntiple threads in a query
         {
           $facet: {
-            // thread 1: query boards
             'queryBoards': [
-              { $skip: pagingSkipValue(page, itemsPerPage) }, // skip value of page front of current page
-              { $limit: itemsPerPage } // limit number of items per page
+              { $skip: pagingSkipValue(page, itemsPerPage) },
+              { $limit: itemsPerPage }
             ],
-
-            // thread 2: count total boards
             'queryTotalBoards': [{ $count: 'countedAllBoards' }]
           }
         }
       ],
-      // fix B and a sort problem: sort by title but in ASCII B standing in front of a
       { collation: { locale: 'en' } }
     ).toArray()
 
@@ -239,6 +223,18 @@ const pushMemberIds = async (boardId, userId) => {
   } catch (error) { throw new Error(error) }
 }
 
+const pullMemberIds = async (boardId, userId) => {
+  try {
+    const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(boardId) },
+      { $pull: { memberIds: new ObjectId(userId) } },
+      { returnDocument: 'after' }
+    )
+
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
 export const boardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
@@ -249,5 +245,6 @@ export const boardModel = {
   update,
   pullColumnOrderIds,
   getBoards,
-  pushMemberIds
+  pushMemberIds,
+  pullMemberIds
 }
