@@ -13,6 +13,13 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
   description: Joi.string().optional(),
   cover: Joi.string().default(null),
   dueDate: Joi.date().timestamp('javascript').allow(null).default(null),
+  labels: Joi.array().items(
+    Joi.object({
+      id: Joi.string().required(),
+      name: Joi.string().required().min(1).max(30).trim().strict(),
+      color: Joi.string().required().pattern(/^#[0-9A-Fa-f]{6}$/)
+    })
+  ).default([]),
   memberIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),

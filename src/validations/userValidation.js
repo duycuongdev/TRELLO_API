@@ -53,8 +53,7 @@ const update = async (req, res, next) => {
   })
 
   try {
-    // Lưu ý đối với trường hợp update, cho phép Unknown để không cần đẩy một số field lên
-    await correctCondition.validateAsync(req.body, { abortEarly: false, allowUnknown: true })
+    await correctCondition.validateAsync(req.body, { abortEarly: false })
     next()
   } catch (error) {
     next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))

@@ -32,11 +32,7 @@ const update = async (req, res, next) => {
     // console.log(req.body)
 
     // chỉ định abortEarly: false để trường hợp có nhiều lỗi validation thì trả về tất cả lỗi
-    await correctCondition.validateAsync(req.body, {
-      abortEarly: false,
-      // đối với trường hợp update, cho phép Unknow để không cần đẩy 1 số field lên
-      allowUnknown: true
-    })
+    await correctCondition.validateAsync(req.body, { abortEarly: false })
     next()
   } catch (error) {
     next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
