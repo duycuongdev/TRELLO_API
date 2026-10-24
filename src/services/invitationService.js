@@ -28,6 +28,11 @@ const createNewBoardInvitation = async (reqBody, inviterId) => {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'This user is already a member of the board!')
     }
 
+    const existingPendingInvitation = await invitationModel.findPendingBoardInvitation(invitee._id, board._id)
+    if (existingPendingInvitation) {
+      throw new ApiError(StatusCodes.CONFLICT, 'A pending invitation already exists for this user and board!')
+    }
+
     const newInvitationData = {
       inviterId,
       inviteeId: invitee._id.toString(),

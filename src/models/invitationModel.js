@@ -80,6 +80,17 @@ const findOneById = async (invitationId) => {
   }
 }
 
+const findPendingBoardInvitation = async (inviteeId, boardId) => {
+  try {
+    return await GET_DB().collection(INVITATION_COLLECTION_NAME).findOne({
+      inviteeId: new ObjectId(inviteeId),
+      'boardInvitation.boardId': new ObjectId(boardId),
+      'boardInvitation.status': BOARD_INVITATION_STATUS.PENDING,
+      _destroy: false
+    })
+  } catch (error) { throw new Error(error) }
+}
+
 const update = async (invitationId, updateData) => {
   try {
     // Lọc những field mà chúng ta không cho phép cập nhật linh tinh
@@ -153,6 +164,7 @@ const findByUser = async (userId) => {
 export const invitationModel = {
   createNewBoardInvitation,
   findOneById,
+  findPendingBoardInvitation,
   update,
   findByUser
 }

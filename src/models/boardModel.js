@@ -34,7 +34,15 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
 })
 
 // chỉ định ra những Fields không dược phép cập nhật trong hàm update
-const INVALID_UPDATE_FIELDS = ['_id', 'createdAt']
+const INVALID_UPDATE_FIELDS = [
+  '_id',
+  'ownerIds',
+  'memberIds',
+  '_destroy',
+  'slug',
+  'createdAt',
+  'updatedAt'
+]
 
 const validateBeforeCreate = async (data) => {
   return await BOARD_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false })
