@@ -5,7 +5,7 @@ import { authMiddleware } from '~/middlewares/authMiddleware'
 import { multerUploadMiddleware } from '~/middlewares/multerUploadMiddleware'
 import { authorizationMiddleware } from '~/middlewares/authorizationMiddleware'
 
-const { requireCardBoardMember } = authorizationMiddleware
+const { requireCardBoardMember, requireCardMemberBelongsToBoard } = authorizationMiddleware
 
 const Router = express.Router()
 
@@ -17,6 +17,7 @@ Router.route('/:id')
     authMiddleware.isAuthorized,
     requireCardBoardMember,
     multerUploadMiddleware.upload.single('cardCover'),
+    requireCardMemberBelongsToBoard,
     cardValidation.update,
     cardController.update
   )
