@@ -19,6 +19,27 @@ const update = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const updateComment = async (req, res, next) => {
+  try {
+    const { id: cardId, commentId } = req.params
+    const { content } = req.body
+    const userId = req.jwtDecoded._id
+    const updatedCard = await cardService.updateComment(cardId, commentId, content, userId)
+
+    res.status(StatusCodes.OK).json(updatedCard)
+  } catch (error) { next(error) }
+}
+
+const deleteComment = async (req, res, next) => {
+  try {
+    const { id: cardId, commentId } = req.params
+    const userId = req.jwtDecoded._id
+    const updatedCard = await cardService.deleteComment(cardId, commentId, userId)
+
+    res.status(StatusCodes.OK).json(updatedCard)
+  } catch (error) { next(error) }
+}
+
 const addAttachment = async (req, res, next) => {
   try {
     const cardId = req.params.id
@@ -48,6 +69,8 @@ const deleteItem = async (req, res, next) => {
 export const cardController = {
   createNew,
   update,
+  updateComment,
+  deleteComment,
   addAttachment,
   deleteAttachment,
   deleteItem

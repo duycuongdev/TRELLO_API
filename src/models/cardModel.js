@@ -46,15 +46,16 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
   memberIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),
-  // Dữ liệu comments của Card chúng ta sẽ học cách nhúng -- embedded vào bản ghi Card luôn như dưới đây:
+  // Dữ liệu comments của Card nhúng embedded trong document Card
   comments: Joi.array().items({
+    _id: Joi.string().optional(),
     userId: Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
     userEmail: Joi.string().pattern(EMAIL_RULE).message(EMAIL_RULE_MESSAGE),
     userAvatar: Joi.string(),
     userDisplayName: Joi.string(),
     content: Joi.string(),
-    // Chỗ này lưu ý vì dùng hàm $push để thêm comment nên không set default Date.now luôn giống hàm insertOne khi create được.
-    commentedAt: Joi.date().timestamp()
+    commentedAt: Joi.date().timestamp(),
+    editedAt: Joi.date().timestamp().optional()
   }).default([]),
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp('javascript').default(null),
@@ -70,12 +71,12 @@ const validateBeforeCreate = async (data) => {
 const createNew = async (data) => {
   try {
     const validData = await validateBeforeCreate(data)
-    // biến đổi 1 số dữ liệu liên quan đến objectId chuẩn chỉnh
     const newCardToAdd = {
       ...validData,
       boardId: new ObjectId(validData.boardId),
       columnId: new ObjectId(validData.columnId)
     }
+
     const createCard = await GET_DB().collection(CARD_COLLECTION_NAME).insertOne(newCardToAdd)
     return createCard
   } catch (error) { throw new Error(error) }
@@ -90,7 +91,7 @@ const findOneById = async (cardId) => {
 
 const update = async (cardId, updateData) => {
   try {
-    // lọc nhưng field không cho phép cập nhật linh tinh
+    // lọc những field không cho phép cập nhật linh tinh
     Object.keys(updateData).forEach(fieldName => {
       if (INVALID_UPDATE_FIELDS.includes(fieldName)) {
         delete updateData[fieldName]
@@ -103,7 +104,6 @@ const update = async (cardId, updateData) => {
     const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(cardId) },
       { $set: updateData },
-      // trả về kết quả mới sau khi cập nhật
       { returnDocument: 'after' }
     )
 
@@ -124,6 +124,52 @@ const unshiftNewComment = async (cardId, commentData) => {
     const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(cardId) },
       { $push: { comments: { $each: [commentData], $position: 0 } } },
+      { returnDocument: 'after' }
+    )
+
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
+// Cập nhật nội dung một comment trong Card
+const updateComment = async (cardId, commentId, content) => {
+  try {
+    const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
+      {
+        _id: new ObjectId(cardId),
+        $or: [
+          { 'comments._id': commentId },
+          { 'comments.commentedAt': isNaN(Number(commentId)) ? -1 : Number(commentId) }
+        ]
+      },
+      {
+        $set: {
+          'comments.$.content': content,
+          'comments.$.editedAt': Date.now()
+        }
+      },
+      { returnDocument: 'after' }
+    )
+
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
+// Xóa một comment khỏi Card
+const deleteComment = async (cardId, commentId) => {
+  try {
+    const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(cardId) },
+      {
+        $pull: {
+          comments: {
+            $or: [
+              { _id: commentId },
+              { commentedAt: isNaN(Number(commentId)) ? -1 : Number(commentId) }
+            ]
+          }
+        }
+      },
       { returnDocument: 'after' }
     )
 
@@ -157,16 +203,13 @@ const deleteAttachment = async (cardId, attachmentId) => {
 
 const updateMembers = async (cardId, incomingMemberInfo) => {
   try {
-    // Tạo ra một biến updateCondition ban đầu là rỗng
     let updateCondition = {}
 
     if (incomingMemberInfo.action === CARD_MEMBER_ACTION.ADD) {
-      // console.log('Trường hợp Add, dùng $push: ', incomingMemberInfo)
       updateCondition = { $push: { memberIds: new ObjectId(incomingMemberInfo.userId) } }
     }
 
     if (incomingMemberInfo.action === CARD_MEMBER_ACTION.REMOVE) {
-      // console.log('Trường hợp Remove, dùng $pull: ', incomingMemberInfo)
       updateCondition = { $pull: { memberIds: new ObjectId(incomingMemberInfo.userId) } }
     }
 
@@ -174,7 +217,7 @@ const updateMembers = async (cardId, incomingMemberInfo) => {
       .collection(CARD_COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(cardId) },
-        updateCondition, // truyền cái updateCondition ở đây
+        updateCondition,
         { returnDocument: 'after' }
       )
 
@@ -199,6 +242,8 @@ export const cardModel = {
   update,
   deleteManyByColumnId,
   unshiftNewComment,
+  updateComment,
+  deleteComment,
   unshiftNewAttachment,
   deleteAttachment,
   deleteOneById,

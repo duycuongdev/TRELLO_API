@@ -38,6 +38,7 @@ const update = async (cardId, reqBody, cardCoverFile, userInfo) => {
     } else if (updateData.commentToAdd) {
       const commentData = {
         ...updateData.commentToAdd,
+        _id: Date.now().toString(),
         userId: userInfo._id,
         userEmail: userInfo.email,
         commentedAt: Date.now()
@@ -50,6 +51,58 @@ const update = async (cardId, reqBody, cardCoverFile, userInfo) => {
       updatedCard = await cardModel.update(cardId, updateData)
     }
 
+    return updatedCard
+  } catch (error) { throw error }
+}
+
+const updateComment = async (cardId, commentId, content, userId) => {
+  try {
+    const targetCard = await cardModel.findOneById(cardId)
+    if (!targetCard) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Card not found!')
+    }
+
+    const targetComment = targetCard.comments?.find(
+      c => c._id?.toString() === commentId || c.commentedAt?.toString() === commentId
+    )
+    if (!targetComment) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Comment not found!')
+    }
+
+    // Chỉ tác giả bình luận mới có quyền chỉnh sửa bình luận
+    if (targetComment.userId.toString() !== userId.toString()) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'You can only edit your own comments!')
+    }
+
+    const updatedCard = await cardModel.updateComment(cardId, commentId, content)
+    return updatedCard
+  } catch (error) { throw error }
+}
+
+const deleteComment = async (cardId, commentId, userId) => {
+  try {
+    const targetCard = await cardModel.findOneById(cardId)
+    if (!targetCard) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Card not found!')
+    }
+
+    const targetComment = targetCard.comments?.find(
+      c => c._id?.toString() === commentId || c.commentedAt?.toString() === commentId
+    )
+    if (!targetComment) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Comment not found!')
+    }
+
+    // Tác giả bình luận hoặc Chủ sở hữu bảng (Board Owner) có quyền xóa bình luận
+    const board = await boardModel.findOneById(targetCard.boardId)
+    const isOwner = board?.ownerIds?.some(id => id.toString() === userId.toString())
+    const isAuthor = targetComment.userId.toString() === userId.toString()
+
+    if (!isOwner && !isAuthor) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'You do not have permission to delete this comment!')
+    }
+
+    const updatedCard = await cardModel.deleteComment(cardId, commentId)
     return updatedCard
   } catch (error) { throw error }
 }
@@ -109,6 +162,8 @@ const deleteItem = async (cardId, userId) => {
 export const cardService = {
   createNew,
   update,
+  updateComment,
+  deleteComment,
   addAttachment,
   deleteAttachment,
   deleteItem

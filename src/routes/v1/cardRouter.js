@@ -22,6 +22,18 @@ Router.route('/:id')
     cardController.deleteItem
   )
 
+// Xử lý bình luận (Comments)
+Router.route('/:id/comments/:commentId')
+  .put(
+    authMiddleware.isAuthorized,
+    cardValidation.updateComment,
+    cardController.updateComment
+  )
+  .delete(
+    authMiddleware.isAuthorized,
+    cardController.deleteComment
+  )
+
 // Xử lý tệp đính kèm (Attachments)
 Router.route('/:id/attachments')
   .post(

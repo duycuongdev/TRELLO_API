@@ -69,6 +69,19 @@ const update = async (req, res, next) => {
   }
 }
 
+const updateComment = async (req, res, next) => {
+  const correctCondition = Joi.object({
+    content: Joi.string().required().trim().min(1)
+  })
+
+  try {
+    await correctCondition.validateAsync(req.body, { abortEarly: false })
+    next()
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
+  }
+}
+
 const deleteItem = async (req, res, next) => {
   const correctCondition = Joi.object({
     id: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
@@ -85,5 +98,6 @@ const deleteItem = async (req, res, next) => {
 export const cardValidation = {
   createNew,
   update,
+  updateComment,
   deleteItem
 }
