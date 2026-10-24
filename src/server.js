@@ -14,6 +14,17 @@ import { inviteUserToBoardSocket } from './sockets/inviteUserToBoardSocket'
 
 const START_SERVER = () => {
   const app = express()
+
+  // Ẩn thông tin framework ExpressJS để chống fingerprinting
+  app.disable('x-powered-by')
+
+  // Cấu hình HTTP Security Headers cơ bản (chống MIME sniffing, Clickjacking, XSS)
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('X-Frame-Options', 'DENY')
+    res.setHeader('X-XSS-Protection', '1; mode=block')
+    next()
+  })
   app.use(cookieParser())
 
   // Fix cái vụ Cache from disk của ExpressJS

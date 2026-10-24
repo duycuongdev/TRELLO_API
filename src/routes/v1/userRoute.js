@@ -3,17 +3,18 @@ import { userValidation } from '~/validations/userValidation'
 import { userController } from '~/controllers/userController'
 import { authMiddleware } from '~/middlewares/authMiddleware'
 import { multerUploadMiddleware } from '~/middlewares/multerUploadMiddleware'
+import { rateLimiterMiddleware } from '~/middlewares/rateLimiterMiddleware'
 
 const Router = express.Router()
 
 Router.route('/register')
-  .post(userValidation.createNew, userController.createNew)
+  .post(rateLimiterMiddleware.authLimiter, userValidation.createNew, userController.createNew)
 
 Router.route('/verify')
   .put(userValidation.verifyAccount, userController.verifyAccount)
 
 Router.route('/login')
-  .post(userValidation.login, userController.login)
+  .post(rateLimiterMiddleware.authLimiter, userValidation.login, userController.login)
 
 Router.route('/logout')
   .delete(userController.logout)
