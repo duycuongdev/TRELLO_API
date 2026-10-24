@@ -16,5 +16,10 @@ Router.route('/:id')
     cardValidation.update,
     cardController.update
   )
+  .delete(
+    authMiddleware.isAuthorized,
+    cardValidation.deleteItem,
+    cardController.deleteItem
+  )
 
 export const cardRouter = Router
