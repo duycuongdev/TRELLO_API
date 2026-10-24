@@ -18,6 +18,19 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
       color: Joi.string().required()
     })
   ).default([]),
+  checklists: Joi.array().items(
+    Joi.object({
+      _id: Joi.string().optional(),
+      title: Joi.string().required().trim(),
+      items: Joi.array().items(
+        Joi.object({
+          _id: Joi.string().optional(),
+          title: Joi.string().required().trim(),
+          isDone: Joi.boolean().default(false)
+        })
+      ).default([])
+    })
+  ).default([]),
   memberIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),

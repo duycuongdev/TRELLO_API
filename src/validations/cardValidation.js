@@ -28,6 +28,19 @@ const update = async (req, res, next) => {
         title: Joi.string().allow('').optional(),
         color: Joi.string().required()
       })
+    ).optional(),
+    checklists: Joi.array().items(
+      Joi.object({
+        _id: Joi.string().optional(),
+        title: Joi.string().required().trim(),
+        items: Joi.array().items(
+          Joi.object({
+            _id: Joi.string().optional(),
+            title: Joi.string().required().trim(),
+            isDone: Joi.boolean().default(false)
+          })
+        ).default([])
+      })
     ).optional()
   })
 
