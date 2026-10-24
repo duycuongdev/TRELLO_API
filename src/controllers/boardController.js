@@ -29,8 +29,9 @@ const getDetails = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
+    const userId = req.jwtDecoded._id
     const boardId = req.params.id
-    const updatedBoard = await boardService.update(boardId, req.body)
+    const updatedBoard = await boardService.update(userId, boardId, req.body)
 
     res.status(StatusCodes.OK).json(updatedBoard)
   } catch (error) { next(error) }
@@ -38,7 +39,8 @@ const update = async (req, res, next) => {
 
 const moveCardToDifferentColumn = async (req, res, next) => {
   try {
-    const result = await boardService.moveCardToDifferentColumn(req.body)
+    const userId = req.jwtDecoded._id
+    const result = await boardService.moveCardToDifferentColumn(userId, req.body)
 
     res.status(StatusCodes.OK).json(result)
   } catch (error) { next(error) }

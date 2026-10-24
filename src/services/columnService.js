@@ -4,7 +4,7 @@ import { cardModel } from '~/models/cardModel'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 
-const createNew = async (reqBody) => {
+const createNew = async (userId, reqBody) => {
   try {
     const newColumn = {
       ...reqBody
@@ -24,7 +24,7 @@ const createNew = async (reqBody) => {
   } catch (error) { throw error }
 }
 
-const update = async (columnId, reqBody) => {
+const update = async (userId, columnId, reqBody) => {
   try {
     const updateDate = {
       ...reqBody,
@@ -36,7 +36,7 @@ const update = async (columnId, reqBody) => {
   } catch (error) { throw error }
 }
 
-const deleteItem = async (columnId) => {
+const deleteItem = async (userId, columnId) => {
   try {
     const targetColumn = await columnModel.findOneById(columnId)
     if (!targetColumn) {

@@ -2,7 +2,7 @@ import { cardModel } from '~/models/cardModel'
 import { columnModel } from '~/models/columnModel'
 import { cloudinaryProvider } from '~/providers/CloundinaryProvider'
 
-const createNew = async (reqBody) => {
+const createNew = async (userId, reqBody) => {
   try {
     const newCard = {
       ...reqBody
@@ -19,7 +19,7 @@ const createNew = async (reqBody) => {
   } catch (error) { throw error }
 }
 
-const update = async (cardId, reqBody, cardCoverFile, userInfo) => {
+const update = async (userId, cardId, reqBody, cardCoverFile, userInfo) => {
   try {
     const updateData = {
       ...reqBody,
