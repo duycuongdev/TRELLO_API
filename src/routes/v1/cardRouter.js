@@ -3,15 +3,19 @@ import { cardValidation } from '~/validations/cardValidation'
 import { cardController } from '~/controllers/cardController'
 import { authMiddleware } from '~/middlewares/authMiddleware'
 import { multerUploadMiddleware } from '~/middlewares/multerUploadMiddleware'
+import { authorizationMiddleware } from '~/middlewares/authorizationMiddleware'
+
+const { requireCardBoardMember } = authorizationMiddleware
 
 const Router = express.Router()
 
 Router.route('/')
-  .post(authMiddleware.isAuthorized, cardValidation.createNew, cardController.createNew)
+  .post(authMiddleware.isAuthorized, requireCardBoardMember, cardValidation.createNew, cardController.createNew)
 
 Router.route('/:id')
   .put(
     authMiddleware.isAuthorized,
+    requireCardBoardMember,
     multerUploadMiddleware.upload.single('cardCover'),
     cardValidation.update,
     cardController.update

@@ -8,7 +8,6 @@ import { cardModel } from '~/models/cardModel'
 import { DEFAULT_PAGE, DEFAULT_ITEMS_PER_PAGE } from '~/utils/constants'
 
 const createNew = async (userId, reqBody) => {
-  // eslint-disable-next-line no-useless-catch
   try {
     // xử lý logic dữ liệu tùy đặc thù dự án
     const newBoard = {
@@ -30,7 +29,6 @@ const createNew = async (userId, reqBody) => {
 }
 
 const getDetails = async (userId, boardId) => {
-  // eslint-disable-next-line no-useless-catch
   try {
     const board = await boardModel.getDetails(userId, boardId)
     if (!board) {
@@ -56,7 +54,7 @@ const getDetails = async (userId, boardId) => {
   } catch (error) { throw error }
 }
 
-const update = async (boardId, reqBody) => {
+const update = async (userId, boardId, reqBody) => {
   try {
     const updateDate = {
       ...reqBody,
@@ -68,7 +66,7 @@ const update = async (boardId, reqBody) => {
   } catch (error) { throw error }
 }
 
-const moveCardToDifferentColumn = async (reqBody) => {
+const moveCardToDifferentColumn = async (userId, reqBody) => {
   try {
     // b1: cập nhật mảng cardOrderIds của column ban đầu chứa nó (xóa cái _id của card ra khỏi mảng)
     await columnModel.update(reqBody.prevColumnId, {
