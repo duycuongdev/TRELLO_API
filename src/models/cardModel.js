@@ -132,22 +132,30 @@ const unshiftNewComment = async (cardId, commentData) => {
 }
 
 // Cập nhật nội dung một comment trong Card
-const updateComment = async (cardId, commentId, content) => {
+const updateComment = async (cardId, commentId, content, targetComment) => {
   try {
+    // Xác định chính xác điều kiện tìm comment trong mảng (tránh dùng $or với toán tử $ của MongoDB)
+    const hasId = Boolean(targetComment?._id || (commentId && isNaN(Number(commentId))))
+    const query = {
+      _id: new ObjectId(cardId),
+      ...(hasId
+        ? { 'comments._id': targetComment?._id || commentId }
+        : { 'comments.commentedAt': targetComment?.commentedAt || Number(commentId) })
+    }
+
+    const updateFields = {
+      'comments.$.content': content,
+      'comments.$.editedAt': Date.now()
+    }
+
+    // Nếu comment cũ trong DB chưa có _id, gán luôn _id mới để chuẩn hóa dữ liệu
+    if (!targetComment?._id) {
+      updateFields['comments.$._id'] = commentId || Date.now().toString()
+    }
+
     const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
-      {
-        _id: new ObjectId(cardId),
-        $or: [
-          { 'comments._id': commentId },
-          { 'comments.commentedAt': isNaN(Number(commentId)) ? -1 : Number(commentId) }
-        ]
-      },
-      {
-        $set: {
-          'comments.$.content': content,
-          'comments.$.editedAt': Date.now()
-        }
-      },
+      query,
+      { $set: updateFields },
       { returnDocument: 'after' }
     )
 
@@ -156,18 +164,18 @@ const updateComment = async (cardId, commentId, content) => {
 }
 
 // Xóa một comment khỏi Card
-const deleteComment = async (cardId, commentId) => {
+const deleteComment = async (cardId, commentId, targetComment) => {
   try {
+    const hasId = Boolean(targetComment?._id || (commentId && isNaN(Number(commentId))))
+    const pullCondition = hasId
+      ? { _id: targetComment?._id || commentId }
+      : { commentedAt: targetComment?.commentedAt || Number(commentId) }
+
     const result = await GET_DB().collection(CARD_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(cardId) },
       {
         $pull: {
-          comments: {
-            $or: [
-              { _id: commentId },
-              { commentedAt: isNaN(Number(commentId)) ? -1 : Number(commentId) }
-            ]
-          }
+          comments: pullCondition
         }
       },
       { returnDocument: 'after' }

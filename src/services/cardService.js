@@ -74,7 +74,7 @@ const updateComment = async (cardId, commentId, content, userId) => {
       throw new ApiError(StatusCodes.FORBIDDEN, 'You can only edit your own comments!')
     }
 
-    const updatedCard = await cardModel.updateComment(cardId, commentId, content)
+    const updatedCard = await cardModel.updateComment(cardId, commentId, content, targetComment)
     return updatedCard
   } catch (error) { throw error }
 }
@@ -102,7 +102,7 @@ const deleteComment = async (cardId, commentId, userId) => {
       throw new ApiError(StatusCodes.FORBIDDEN, 'You do not have permission to delete this comment!')
     }
 
-    const updatedCard = await cardModel.deleteComment(cardId, commentId)
+    const updatedCard = await cardModel.deleteComment(cardId, commentId, targetComment)
     return updatedCard
   } catch (error) { throw error }
 }
