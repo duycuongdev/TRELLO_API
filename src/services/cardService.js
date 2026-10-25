@@ -159,6 +159,75 @@ const deleteItem = async (cardId, userId) => {
   } catch (error) { throw error }
 }
 
+const copyCard = async (cardId, reqBody) => {
+  try {
+    const sourceCard = await cardModel.findOneById(cardId)
+    if (!sourceCard) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Card to copy not found!')
+    }
+
+    const { title, columnId, position, keepOptions = {} } = reqBody
+    const targetColumn = await columnModel.findOneById(columnId)
+    if (!targetColumn) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Target column not found!')
+    }
+
+    // Format checklists with new unique IDs if copied
+    const checklistsToCopy = (keepOptions.checklists !== false && Array.isArray(sourceCard.checklists))
+      ? sourceCard.checklists.map(cl => ({
+        _id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
+        title: cl.title,
+        items: (cl.items || []).map(item => ({
+          _id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
+          title: item.title,
+          isDone: Boolean(item.isDone)
+        }))
+      }))
+      : []
+
+    // Build duplicated card data
+    const newCardData = {
+      boardId: sourceCard.boardId.toString(),
+      columnId: columnId.toString(),
+      title: title.trim(),
+      description: keepOptions.description !== false ? (sourceCard.description || '') : '',
+      cover: keepOptions.cover !== false ? (sourceCard.cover || null) : null,
+      labels: keepOptions.labels !== false ? (sourceCard.labels || []) : [],
+      checklists: checklistsToCopy,
+      dueDate: keepOptions.dueDate !== false ? (sourceCard.dueDate || null) : null,
+      isDueDateComplete: keepOptions.dueDate !== false ? Boolean(sourceCard.isDueDateComplete) : false,
+      attachments: keepOptions.attachments !== false ? (sourceCard.attachments || []) : [],
+      memberIds: keepOptions.members !== false ? (sourceCard.memberIds || []).map(id => id.toString()) : [],
+      comments: [] // Comments are not copied
+    }
+
+    const createCardResult = await cardModel.createNew(newCardData)
+    const newCard = await cardModel.findOneById(createCardResult.insertedId)
+
+    if (newCard) {
+      // Insert into target column cardOrderIds at specific position if given, else push
+      const currentOrder = (targetColumn.cardOrderIds || [])
+        .filter(id => !id.toString().includes('placeholder-card'))
+        .map(id => id.toString())
+
+      const newCardIdStr = newCard._id.toString()
+      const newOrder = [...currentOrder]
+
+      if (typeof position === 'number' && position >= 0 && position <= newOrder.length) {
+        newOrder.splice(position, 0, newCardIdStr)
+      } else {
+        newOrder.push(newCardIdStr)
+      }
+
+      await columnModel.update(columnId, {
+        cardOrderIds: newOrder
+      })
+    }
+
+    return newCard
+  } catch (error) { throw error }
+}
+
 export const cardService = {
   createNew,
   update,
@@ -166,5 +235,6 @@ export const cardService = {
   deleteComment,
   addAttachment,
   deleteAttachment,
-  deleteItem
+  deleteItem,
+  copyCard
 }

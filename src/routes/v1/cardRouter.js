@@ -48,4 +48,12 @@ Router.route('/:id/attachments/:attachmentId')
     cardController.deleteAttachment
   )
 
+// Sao chép thẻ (Copy Card)
+Router.route('/:id/copy')
+  .post(
+    authMiddleware.isAuthorized,
+    cardValidation.copyCard,
+    cardController.copyCard
+  )
+
 export const cardRouter = Router

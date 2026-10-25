@@ -95,9 +95,39 @@ const deleteItem = async (req, res, next) => {
   }
 }
 
+const copyCard = async (req, res, next) => {
+  const correctParamCondition = Joi.object({
+    id: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  })
+
+  const correctBodyCondition = Joi.object({
+    title: Joi.string().required().min(1).max(255).trim(),
+    columnId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
+    position: Joi.number().integer().min(0).optional(),
+    keepOptions: Joi.object({
+      checklists: Joi.boolean().optional(),
+      labels: Joi.boolean().optional(),
+      attachments: Joi.boolean().optional(),
+      dueDate: Joi.boolean().optional(),
+      members: Joi.boolean().optional(),
+      cover: Joi.boolean().optional(),
+      description: Joi.boolean().optional()
+    }).optional()
+  })
+
+  try {
+    await correctParamCondition.validateAsync(req.params)
+    await correctBodyCondition.validateAsync(req.body, { abortEarly: false })
+    next()
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
+  }
+}
+
 export const cardValidation = {
   createNew,
   update,
   updateComment,
-  deleteItem
+  deleteItem,
+  copyCard
 }

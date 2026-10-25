@@ -9,7 +9,7 @@ const CARD_COLLECTION_NAME = 'cards'
 const CARD_COLLECTION_SCHEMA = Joi.object({
   boardId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
   columnId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
-  title: Joi.string().required().min(3).max(50).trim().strict(),
+  title: Joi.string().required().min(1).max(255).trim().strict(),
   description: Joi.string().optional(),
   cover: Joi.string().default(null),
   labels: Joi.array().items(
@@ -74,7 +74,8 @@ const createNew = async (data) => {
     const newCardToAdd = {
       ...validData,
       boardId: new ObjectId(validData.boardId),
-      columnId: new ObjectId(validData.columnId)
+      columnId: new ObjectId(validData.columnId),
+      memberIds: (validData.memberIds || []).map(id => new ObjectId(id))
     }
 
     const createCard = await GET_DB().collection(CARD_COLLECTION_NAME).insertOne(newCardToAdd)
