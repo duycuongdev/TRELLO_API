@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { cloneDeep } from 'lodash'
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
+import { invitationModel } from '~/models/invitationModel'
 import { GET_DB } from '~/config/mongodb'
 import { ObjectId } from 'mongodb'
 import { DEFAULT_PAGE, DEFAULT_ITEMS_PER_PAGE } from '~/utils/constants'
@@ -182,6 +183,78 @@ const getArchivedItems = async (userId, boardId) => {
   } catch (error) { throw error }
 }
 
+const closeBoard = async (userId, boardId) => {
+  try {
+    const board = await boardModel.findOneById(boardId)
+    if (!board) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found!')
+    }
+
+    const isOwner = (board.ownerIds || []).some(id => id.toString() === userId.toString())
+    if (!isOwner) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'Only board owners can close this board!')
+    }
+
+    await boardModel.update(boardId, {
+      _destroy: true,
+      updatedAt: Date.now()
+    })
+
+    return { message: 'Board closed successfully!', boardId }
+  } catch (error) { throw error }
+}
+
+const reopenBoard = async (userId, boardId) => {
+  try {
+    const board = await boardModel.findOneById(boardId)
+    if (!board) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found!')
+    }
+
+    const isOwner = (board.ownerIds || []).some(id => id.toString() === userId.toString())
+    if (!isOwner) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'Only board owners can reopen this board!')
+    }
+
+    await boardModel.update(boardId, {
+      _destroy: false,
+      updatedAt: Date.now()
+    })
+
+    return { message: 'Board reopened successfully!', boardId }
+  } catch (error) { throw error }
+}
+
+const deleteBoard = async (userId, boardId) => {
+  try {
+    const board = await boardModel.findOneById(boardId)
+    if (!board) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found!')
+    }
+
+    const isOwner = (board.ownerIds || []).some(id => id.toString() === userId.toString())
+    if (!isOwner) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'Only board owners can permanently delete this board!')
+    }
+
+    // 1. Delete board document
+    await boardModel.deleteOneById(boardId)
+
+    // 2. Cascading delete columns
+    await columnModel.deleteManyByBoardId(boardId)
+
+    // 3. Cascading delete cards
+    await cardModel.deleteManyByBoardId(boardId)
+
+    // 4. Cascading delete invitations
+    await GET_DB().collection(invitationModel.INVITATION_COLLECTION_NAME).deleteMany({
+      'boardInvitation.boardId': new ObjectId(boardId)
+    })
+
+    return { deleteResult: 'Board and all associated data permanently deleted!' }
+  } catch (error) { throw error }
+}
+
 export const boardService = {
   createNew,
   getDetails,
@@ -189,5 +262,8 @@ export const boardService = {
   moveCardToDifferentColumn,
   getBoards,
   removeMember,
-  getArchivedItems
+  getArchivedItems,
+  closeBoard,
+  reopenBoard,
+  deleteBoard
 }

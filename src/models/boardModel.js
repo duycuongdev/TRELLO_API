@@ -66,7 +66,6 @@ const getDetails = async (userId, boardId) => {
   try {
     const queryConditions = [
       { _id: new ObjectId(boardId) },
-      { _destroy: false },
       {
         $or: [
           { ownerIds: { $all: [new ObjectId(userId)] } },
@@ -168,8 +167,9 @@ const update = async (boardId, updateData) => {
 
 const getBoards = async (userId, page, itemsPerPage, queryFilter) => {
   try {
+    const isClosed = queryFilter?.closed === 'true' || queryFilter?.closed === true
     const queryConditions = [
-      { _destroy: false },
+      { _destroy: isClosed ? true : { $ne: true } },
       {
         $or: [
           { ownerIds: { $all: [new ObjectId(userId)] } },
@@ -181,6 +181,7 @@ const getBoards = async (userId, page, itemsPerPage, queryFilter) => {
     // query filter search by title (escape regex to prevent ReDoS / syntax errors)
     if (queryFilter) {
       Object.keys(queryFilter).forEach(key => {
+        if (key === 'closed') return
         const sanitizedValue = String(queryFilter[key]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         queryConditions.push({ [key]: { $regex: new RegExp(sanitizedValue, 'i') } })
       })
@@ -237,6 +238,13 @@ const pullMemberIds = async (boardId, userId) => {
   } catch (error) { throw new Error(error) }
 }
 
+const deleteOneById = async (boardId) => {
+  try {
+    const result = await GET_DB().collection(BOARD_COLLECTION_NAME).deleteOne({ _id: new ObjectId(boardId) })
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
 export const boardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
@@ -248,5 +256,6 @@ export const boardModel = {
   pullColumnOrderIds,
   getBoards,
   pushMemberIds,
-  pullMemberIds
+  pullMemberIds,
+  deleteOneById
 }

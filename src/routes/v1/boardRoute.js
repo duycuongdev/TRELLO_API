@@ -18,6 +18,13 @@ Router.route('/:id')
     boardValidation.update,
     boardController.update
   )
+  .delete(authMiddleware.isAuthorized, boardController.deleteBoard)
+
+Router.route('/:id/close')
+  .put(authMiddleware.isAuthorized, boardController.closeBoard)
+
+Router.route('/:id/reopen')
+  .put(authMiddleware.isAuthorized, boardController.reopenBoard)
 
 Router.route('/:id/archived_items')
   .get(authMiddleware.isAuthorized, boardController.getArchivedItems)

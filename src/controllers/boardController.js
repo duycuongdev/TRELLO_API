@@ -69,6 +69,33 @@ const getArchivedItems = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const closeBoard = async (req, res, next) => {
+  try {
+    const userId = req.jwtDecoded._id
+    const boardId = req.params.id
+    const result = await boardService.closeBoard(userId, boardId)
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) { next(error) }
+}
+
+const reopenBoard = async (req, res, next) => {
+  try {
+    const userId = req.jwtDecoded._id
+    const boardId = req.params.id
+    const result = await boardService.reopenBoard(userId, boardId)
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) { next(error) }
+}
+
+const deleteBoard = async (req, res, next) => {
+  try {
+    const userId = req.jwtDecoded._id
+    const boardId = req.params.id
+    const result = await boardService.deleteBoard(userId, boardId)
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) { next(error) }
+}
+
 export const boardController = {
   createNew,
   getDetails,
@@ -76,5 +103,8 @@ export const boardController = {
   moveCardToDifferentColumn,
   getBoards,
   removeMember,
-  getArchivedItems
+  getArchivedItems,
+  closeBoard,
+  reopenBoard,
+  deleteBoard
 }
