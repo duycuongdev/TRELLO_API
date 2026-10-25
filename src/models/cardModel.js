@@ -10,8 +10,8 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
   boardId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
   columnId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
   title: Joi.string().required().min(1).max(255).trim().strict(),
-  description: Joi.string().optional(),
-  cover: Joi.string().default(null),
+  description: Joi.string().allow('', null).optional().default(''),
+  cover: Joi.string().allow(null, '').default(null),
   labels: Joi.array().items(
     Joi.object({
       title: Joi.string().allow('').optional(),
