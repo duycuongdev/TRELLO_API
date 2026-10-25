@@ -247,9 +247,7 @@ const deleteBoard = async (userId, boardId) => {
     await cardModel.deleteManyByBoardId(boardId)
 
     // 4. Cascading delete invitations
-    await GET_DB().collection(invitationModel.INVITATION_COLLECTION_NAME).deleteMany({
-      'boardInvitation.boardId': new ObjectId(boardId)
-    })
+    await invitationModel.deleteManyByBoardId(boardId)
 
     return { deleteResult: 'Board and all associated data permanently deleted!' }
   } catch (error) { throw error }
