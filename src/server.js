@@ -58,8 +58,9 @@ const START_SERVER = () => {
   })
 
   if (env.BUILD_MODE === 'production') {
-    server.listen(process.env.PORT, () => {
-      console.log(`Production Hello ${env.AUTHOR}, Back-end sever is running successfully at Port ${process.env.PORT}`)
+    const port = process.env.PORT || 8000
+    server.listen(port, () => {
+      console.log(`Production Hello ${env.AUTHOR}, Back-end sever is running successfully at Port ${port}`)
     })
   } else {
     server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
