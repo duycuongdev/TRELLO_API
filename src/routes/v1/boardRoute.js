@@ -19,6 +19,9 @@ Router.route('/:id')
     boardController.update
   )
 
+Router.route('/:id/archived_items')
+  .get(authMiddleware.isAuthorized, boardController.getArchivedItems)
+
 Router.route('/supports/moving_card')
   .put(authMiddleware.isAuthorized, boardValidation.moveCardToDifferentColumn, boardController.moveCardToDifferentColumn)
 

@@ -56,8 +56,48 @@ const deleteItem = async (columnId) => {
   } catch (error) { throw error }
 }
 
+const archiveColumn = async (columnId) => {
+  try {
+    const targetColumn = await columnModel.findOneById(columnId)
+    if (!targetColumn) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Column not found!')
+    }
+
+    const updatedColumn = await columnModel.update(columnId, {
+      _destroy: true,
+      updatedAt: Date.now()
+    })
+
+    // Pull columnId from board columnOrderIds
+    await boardModel.pullColumnOrderIds(targetColumn)
+
+    return updatedColumn
+  } catch (error) { throw error }
+}
+
+const restoreColumn = async (columnId) => {
+  try {
+    const targetColumn = await columnModel.findOneById(columnId)
+    if (!targetColumn) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Column not found!')
+    }
+
+    const updatedColumn = await columnModel.update(columnId, {
+      _destroy: false,
+      updatedAt: Date.now()
+    })
+
+    // Push columnId back to board columnOrderIds
+    await boardModel.pushColumnOrderIds(targetColumn)
+
+    return updatedColumn
+  } catch (error) { throw error }
+}
+
 export const columnService = {
   createNew,
   update,
-  deleteItem
+  deleteItem,
+  archiveColumn,
+  restoreColumn
 }

@@ -56,4 +56,18 @@ Router.route('/:id/copy')
     cardController.copyCard
   )
 
+// Lưu trữ thẻ (Archive Card)
+Router.route('/:id/archive')
+  .put(
+    authMiddleware.isAuthorized,
+    cardController.archiveCard
+  )
+
+// Khôi phục thẻ (Restore Card)
+Router.route('/:id/restore')
+  .put(
+    authMiddleware.isAuthorized,
+    cardController.restoreCard
+  )
+
 export const cardRouter = Router

@@ -74,6 +74,22 @@ const copyCard = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const archiveCard = async (req, res, next) => {
+  try {
+    const cardId = req.params.id
+    const result = await cardService.archiveCard(cardId)
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) { next(error) }
+}
+
+const restoreCard = async (req, res, next) => {
+  try {
+    const cardId = req.params.id
+    const result = await cardService.restoreCard(cardId)
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) { next(error) }
+}
+
 export const cardController = {
   createNew,
   update,
@@ -82,5 +98,7 @@ export const cardController = {
   addAttachment,
   deleteAttachment,
   deleteItem,
-  copyCard
+  copyCard,
+  archiveCard,
+  restoreCard
 }

@@ -4,6 +4,8 @@ import { columnModel } from '~/models/columnModel'
 import { boardModel } from '~/models/boardModel'
 import { cloudinaryProvider } from '~/providers/CloundinaryProvider'
 import ApiError from '~/utils/ApiError'
+import { GET_DB } from '~/config/mongodb'
+import { ObjectId } from 'mongodb'
 
 const createNew = async (reqBody) => {
   try {
@@ -228,6 +230,60 @@ const copyCard = async (cardId, reqBody) => {
   } catch (error) { throw error }
 }
 
+const archiveCard = async (cardId) => {
+  try {
+    const card = await cardModel.findOneById(cardId)
+    if (!card) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Card not found!')
+    }
+
+    const updatedCard = await cardModel.update(cardId, {
+      _destroy: true,
+      updatedAt: Date.now()
+    })
+
+    // Pull cardId from column cardOrderIds
+    await columnModel.pullCardOrderIds(card)
+
+    return updatedCard
+  } catch (error) { throw error }
+}
+
+const restoreCard = async (cardId) => {
+  try {
+    const card = await cardModel.findOneById(cardId)
+    if (!card) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Card not found!')
+    }
+
+    // Check if original column exists and is active
+    let targetColumn = await columnModel.findOneById(card.columnId)
+    let finalColumnId = card.columnId
+
+    if (!targetColumn || targetColumn._destroy === true) {
+      const firstActiveCol = await GET_DB().collection(columnModel.COLUMN_COLLECTION_NAME).findOne({
+        boardId: new ObjectId(card.boardId),
+        _destroy: { $ne: true }
+      })
+      if (!firstActiveCol) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Cannot restore card because there are no active columns on this board!')
+      }
+      targetColumn = firstActiveCol
+      finalColumnId = firstActiveCol._id
+    }
+
+    const updatedCard = await cardModel.update(cardId, {
+      _destroy: false,
+      columnId: finalColumnId,
+      updatedAt: Date.now()
+    })
+
+    await columnModel.pushCardOrderIds({ ...card, columnId: finalColumnId })
+
+    return updatedCard
+  } catch (error) { throw error }
+}
+
 export const cardService = {
   createNew,
   update,
@@ -236,5 +292,7 @@ export const cardService = {
   addAttachment,
   deleteAttachment,
   deleteItem,
-  copyCard
+  copyCard,
+  archiveCard,
+  restoreCard
 }

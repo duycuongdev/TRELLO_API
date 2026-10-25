@@ -60,11 +60,21 @@ const removeMember = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getArchivedItems = async (req, res, next) => {
+  try {
+    const userId = req.jwtDecoded._id
+    const boardId = req.params.id
+    const results = await boardService.getArchivedItems(userId, boardId)
+    res.status(StatusCodes.OK).json(results)
+  } catch (error) { next(error) }
+}
+
 export const boardController = {
   createNew,
   getDetails,
   update,
   moveCardToDifferentColumn,
   getBoards,
-  removeMember
+  removeMember,
+  getArchivedItems
 }

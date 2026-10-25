@@ -26,8 +26,26 @@ const deleteItem = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const archiveColumn = async (req, res, next) => {
+  try {
+    const columnId = req.params.id
+    const result = await columnService.archiveColumn(columnId)
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) { next(error) }
+}
+
+const restoreColumn = async (req, res, next) => {
+  try {
+    const columnId = req.params.id
+    const result = await columnService.restoreColumn(columnId)
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) { next(error) }
+}
+
 export const columnController = {
   createNew,
   update,
-  deleteItem
+  deleteItem,
+  archiveColumn,
+  restoreColumn
 }

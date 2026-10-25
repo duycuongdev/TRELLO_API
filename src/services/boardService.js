@@ -6,6 +6,8 @@ import { StatusCodes } from 'http-status-codes'
 import { cloneDeep } from 'lodash'
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
+import { GET_DB } from '~/config/mongodb'
+import { ObjectId } from 'mongodb'
 import { DEFAULT_PAGE, DEFAULT_ITEMS_PER_PAGE } from '~/utils/constants'
 
 const createNew = async (userId, reqBody) => {
@@ -30,8 +32,22 @@ const getDetails = async (userId, boardId) => {
     }
 
     const resBoard = cloneDeep(board)
+    // Lọc chỉ lấy các column chưa bị lưu trữ (_destroy !== true)
+    resBoard.columns = (resBoard.columns || []).filter(col => col._destroy !== true)
+
+    // Lọc columnOrderIds chỉ chứa id của các column active
+    const activeColumnIds = new Set(resBoard.columns.map(c => c._id.toString()))
+    resBoard.columnOrderIds = (resBoard.columnOrderIds || []).filter(id => activeColumnIds.has(id.toString()))
+
     resBoard.columns.forEach(column => {
-      column.cards = resBoard.cards.filter(card => card.columnId.equals(column._id))
+      // Lọc các card chưa bị lưu trữ (_destroy !== true)
+      column.cards = (resBoard.cards || [])
+        .filter(card => card._destroy !== true)
+        .filter(card => card.columnId.equals(column._id))
+
+      // Lọc cardOrderIds của column
+      const activeCardIds = new Set(column.cards.map(c => c._id.toString()))
+      column.cardOrderIds = (column.cardOrderIds || []).filter(id => activeCardIds.has(id.toString()))
     })
 
     delete resBoard.cards
@@ -114,11 +130,64 @@ const removeMember = async (currentUserId, boardId, targetUserId) => {
   } catch (error) { throw error }
 }
 
+const getArchivedItems = async (userId, boardId) => {
+  try {
+    const board = await boardModel.findOneById(boardId)
+    if (!board) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found!')
+    }
+
+    const isOwner = (board.ownerIds || []).some(id => id.toString() === userId.toString())
+    const isMember = (board.memberIds || []).some(id => id.toString() === userId.toString())
+    if (!isOwner && !isMember) {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'You do not have permission to view archived items of this board!')
+    }
+
+    const archivedCards = await GET_DB().collection(cardModel.CARD_COLLECTION_NAME).aggregate([
+      {
+        $match: {
+          boardId: new ObjectId(boardId),
+          _destroy: true
+        }
+      },
+      {
+        $lookup: {
+          from: columnModel.COLUMN_COLLECTION_NAME,
+          localField: 'columnId',
+          foreignField: '_id',
+          as: 'column'
+        }
+      },
+      {
+        $addFields: {
+          columnTitle: { $arrayElemAt: ['$column.title', 0] }
+        }
+      },
+      {
+        $project: {
+          column: 0
+        }
+      }
+    ]).toArray()
+
+    const archivedColumns = await GET_DB().collection(columnModel.COLUMN_COLLECTION_NAME).find({
+      boardId: new ObjectId(boardId),
+      _destroy: true
+    }).toArray()
+
+    return {
+      cards: archivedCards,
+      columns: archivedColumns
+    }
+  } catch (error) { throw error }
+}
+
 export const boardService = {
   createNew,
   getDetails,
   update,
   moveCardToDifferentColumn,
   getBoards,
-  removeMember
+  removeMember,
+  getArchivedItems
 }
