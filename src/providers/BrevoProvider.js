@@ -4,7 +4,6 @@
 const SibApiV3Sdk = require('@getbrevo/brevo')
 import { env } from '~/config/environment'
 
-
 /**
  * Có thể xem thêm phần docs cấu hình theo từng ngôn ngữ khác nhau tùy dự án ở Brevo Dashboard > Account > SMTP & API > API Keys
  * https://brevo.com
@@ -13,16 +12,23 @@ import { env } from '~/config/environment'
  */
 let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi()
 let apiKey = apiInstance.authentications['apiKey']
-apiKey.apiKey = env.BREVO_API_KEY
+if (env.BREVO_API_KEY) {
+  apiKey.apiKey = env.BREVO_API_KEY.trim()
+}
 
 const sendEmail = async (recipientEmail, customSubject, htmlContent) => {
+  // Đảm bảo apiKey luôn lấy giá trị mới nhất được trim khoảng trắng
+  if (env.BREVO_API_KEY) {
+    apiKey.apiKey = env.BREVO_API_KEY.trim()
+  }
+
   // khởi tạo 1 cái sendSmtpEmail
   let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
 
   // tài khoản gửi email
   sendSmtpEmail.sender = {
-    email: env.ADMIN_EMAIL_ADDRESS,
-    name: env.ADMIN_EMAIL_NAME
+    email: env.ADMIN_EMAIL_ADDRESS ? env.ADMIN_EMAIL_ADDRESS.trim() : 'admin@trello.com',
+    name: env.ADMIN_EMAIL_NAME ? env.ADMIN_EMAIL_NAME.trim() : 'Trello Admin'
   }
 
   // người nhận email
