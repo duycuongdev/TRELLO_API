@@ -17,9 +17,19 @@ if (env.BREVO_API_KEY) {
 }
 
 const sendEmail = async (recipientEmail, customSubject, htmlContent) => {
+  const trimmedKey = env.BREVO_API_KEY ? env.BREVO_API_KEY.trim() : ''
+
+  // Cảnh báo trực tiếp nếu dev/user nhầm giữa SMTP Key (xsmtpsib-) và REST API Key (xkeysib-)
+  if (trimmedKey.startsWith('xsmtpsib-')) {
+    const errorMsg = 'Invalid Brevo Key Type: Bạn đang cấu hình khóa SMTP (bắt đầu bằng "xsmtpsib-"). Thư viện Brevo REST API yêu cầu API Key v3 (bắt đầu bằng "xkeysib-"). Hãy vào Brevo Dashboard > SMTP & API > Tab "API Keys" để tạo khóa "xkeysib-".'
+    // eslint-disable-next-line no-console
+    console.error('❌ ' + errorMsg)
+    throw new Error(errorMsg)
+  }
+
   // Đảm bảo apiKey luôn lấy giá trị mới nhất được trim khoảng trắng
-  if (env.BREVO_API_KEY) {
-    apiKey.apiKey = env.BREVO_API_KEY.trim()
+  if (trimmedKey) {
+    apiKey.apiKey = trimmedKey
   }
 
   // khởi tạo 1 cái sendSmtpEmail
