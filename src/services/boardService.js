@@ -1,5 +1,6 @@
 import { slugify } from '~/utils/formatter'
 import { boardModel } from '~/models/boardModel'
+import { cloudinaryProvider } from '~/providers/CloundinaryProvider'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 import { cloneDeep } from 'lodash'
@@ -39,12 +40,19 @@ const getDetails = async (userId, boardId) => {
   } catch (error) { throw error }
 }
 
-const update = async (boardId, reqBody) => {
+const update = async (boardId, reqBody, boardBackgroundFile) => {
   try {
     const updateData = {
       ...reqBody,
       updatedAt: Date.now()
     }
+
+    // Nếu người dùng upload file ảnh nền từ thiết bị, tải lên Cloudinary
+    if (boardBackgroundFile) {
+      const uploadResult = await cloudinaryProvider.streamUpload(boardBackgroundFile.buffer, 'boardBackgrounds')
+      updateData.background = uploadResult.secure_url
+    }
+
     const updatedBoard = await boardModel.update(boardId, updateData)
 
     return updatedBoard
