@@ -8,13 +8,13 @@ import { rateLimiterMiddleware } from '~/middlewares/rateLimiterMiddleware'
 const Router = express.Router()
 
 Router.route('/register')
-  .post(rateLimiterMiddleware.authLimiter, userValidation.createNew, userController.createNew)
+  .post(rateLimiterMiddleware.registerLimiter, userValidation.createNew, userController.createNew)
 
 Router.route('/verify')
   .put(userValidation.verifyAccount, userController.verifyAccount)
 
 Router.route('/login')
-  .post(rateLimiterMiddleware.authLimiter, userValidation.login, userController.login)
+  .post(rateLimiterMiddleware.loginLimiter, userValidation.login, userController.login)
 
 Router.route('/logout')
   .delete(userController.logout)

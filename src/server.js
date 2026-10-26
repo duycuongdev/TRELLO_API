@@ -5,6 +5,7 @@ import { CONNECT_DB, CLOSE_DB } from '~/config/mongodb'
 import { env } from '~/config/environment'
 import { APIs_V1 } from '~/routes/v1'
 import { errorHandlingMiddleware } from './middlewares/errorHandlingMiddleware'
+import { rateLimiterMiddleware } from './middlewares/rateLimiterMiddleware'
 import cors from 'cors'
 import { corsOptions } from './config/cors'
 import cookieParser from 'cookie-parser'
@@ -17,6 +18,9 @@ const START_SERVER = () => {
 
   // Ẩn thông tin framework ExpressJS để chống fingerprinting
   app.disable('x-powered-by')
+
+  // Bật trust proxy để Express đọc đúng IP client khi chạy sau Render/Cloudflare reverse proxy
+  app.set('trust proxy', 1)
 
   // Cấu hình HTTP Security Headers cơ bản (chống MIME sniffing, Clickjacking, XSS)
   app.use((req, res, next) => {
@@ -38,7 +42,8 @@ const START_SERVER = () => {
   // enable req.body json data
   app.use(express.json())
 
-  app.use('/v1', APIs_V1)
+  // Áp dụng apiLimiter cho toàn bộ router /v1
+  app.use('/v1', rateLimiterMiddleware.apiLimiter, APIs_V1)
 
   // API trả về cho UptimeRobot để check health (tránh lỗi 404)
   app.get('/', (req, res) => {
@@ -91,4 +96,3 @@ const START_SERVER = () => {
     process.exit(0)
   }
 })()
-
