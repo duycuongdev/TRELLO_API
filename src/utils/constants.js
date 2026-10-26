@@ -7,11 +7,6 @@ export const WHITELIST_DOMAINS = [
   'https://trello-web-tawny.vercel.app'
 ]
 
-export const BOARD_TYPES = {
-  PUBLIC: 'public',
-  PRIVATE: 'private'
-}
-
 export const WEBSITE_DOMAINS = (env.BUILD_MODE === 'dev') ? env.WEBSITE_DOMAIN_DEVELOPMENT : env.WEBSITE_DOMAIN_PRODUCTION
 
 export const DEFAULT_PAGE = 1

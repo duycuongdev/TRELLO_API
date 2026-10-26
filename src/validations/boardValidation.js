@@ -1,7 +1,6 @@
 import Joi from 'joi'
 import { StatusCodes } from 'http-status-codes'
 import ApiError from '~/utils/ApiError'
-import { BOARD_TYPES } from '~/utils/constants'
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 
 const createNew = async (req, res, next) => {
@@ -13,8 +12,7 @@ const createNew = async (req, res, next) => {
       'string.max': 'Title length must be less than or equal to 5 character long',
       'string.trim': 'Title must not have leading or trailing whitespace'
     }),
-    description: Joi.string().required().min(3).max(256).trim().strict(),
-    type: Joi.string().valid(BOARD_TYPES.PUBLIC, BOARD_TYPES.PRIVATE).required()
+    description: Joi.string().required().min(3).max(256).trim().strict()
   })
 
   try {
@@ -29,7 +27,6 @@ const update = async (req, res, next) => {
   const correctCondition = Joi.object({
     title: Joi.string().min(3).max(50).trim().strict(),
     description: Joi.string().min(3).max(256).trim().strict(),
-    type: Joi.string().valid(BOARD_TYPES.PUBLIC, BOARD_TYPES.PRIVATE),
     background: Joi.string().allow(null, '').optional(),
     columnOrderIds: Joi.array().items(
       Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
