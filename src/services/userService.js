@@ -96,7 +96,7 @@ const createNew = async (reqBody) => {
                     </p>
 
                     <!-- CTA Button -->
-                    <table border="0" cellspacing="0" cellpadding="0" style="margin: 28px 0;">
+                    <table border="0" cellspacing="0" cellpadding="0" style="margin: 28px 0 10px 0;">
                       <tr>
                         <td align="center" style="border-radius: 6px;" bgcolor="#0052cc">
                           <a href="${verifiCationLink}" target="_blank" style="font-size: 15px; font-family: inherit; color: #ffffff; text-decoration: none; border-radius: 6px; padding: 14px 32px; display: inline-block; font-weight: 600; letter-spacing: 0.2px;">
@@ -105,17 +105,6 @@ const createNew = async (reqBody) => {
                         </td>
                       </tr>
                     </table>
-
-                    <p style="margin: 24px 0 8px 0; font-size: 13px; line-height: 1.5; color: #6b778c;">
-                      Button not working? You can also copy and paste this link into your browser:
-                    </p>
-                    <div style="background-color: #f4f5f7; border: 1px solid #dfe1e6; border-radius: 6px; padding: 12px; font-size: 12px; word-break: break-all; color: #0052cc; font-family: Consolas, Monaco, monospace; line-height: 1.4;">
-                      <a href="${verifiCationLink}" target="_blank" style="color: #0052cc; text-decoration: underline;">${verifiCationLink}</a>
-                    </div>
-
-                    <p style="margin: 24px 0 0 0; font-size: 13px; line-height: 1.5; color: #8993a4;">
-                      If you didn't create an account with Trello, you can safely ignore this email.
-                    </p>
                   </td>
                 </tr>
 
@@ -170,7 +159,8 @@ const verifyAccount = async (reqBody) => {
 
     // Các bước kiểm tra cần thiết
     if (!existUser) throw new ApiError(StatusCodes.NOT_FOUND, 'Account not found!')
-    if (existUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is already active')
+    // Nếu tài khoản đã được kích hoạt từ trước (ví dụ do click lại link hoặc trình duyệt pre-fetch), coi như thành công
+    if (existUser.isActive) return pickUser(existUser)
     if (existUser.verifyToken !== reqBody.token) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Invalid token!')
 
     // mọi thứ ok cập nhật lại thông tin user trong DB
