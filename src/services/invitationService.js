@@ -3,6 +3,7 @@ import ApiError from '~/utils/ApiError'
 import { userModel } from '~/models/userModel'
 import { boardModel } from '~/models/boardModel'
 import { invitationModel } from '~/models/invitationModel'
+import { cardModel } from '~/models/cardModel'
 import { INVITATION_TYPES, BOARD_INVITATION_STATUS } from '~/utils/constants'
 import { pickUser } from '~/utils/formatter'
 
@@ -75,12 +76,16 @@ const getInvitations = async (userId) => {
     const getInvitations = await invitationModel.findByUser(userId)
     const resInvitations = getInvitations.map(i => ({
       ...i,
+      type: 'BOARD_INVITATION',
       inviter: i.inviter[0] || {},
       invitee: i.invitee[0] || {},
       board: i.board[0] || {}
     }))
 
-    return resInvitations
+    // Lấy thêm các thông báo deadline (quá hạn hoặc sắp hết hạn) của user hiện tại
+    const dueCards = await cardModel.findDueCardsByUser(userId)
+
+    return [...dueCards, ...resInvitations]
   } catch (error) { throw error }
 }
 

@@ -251,6 +251,58 @@ const deleteManyByBoardId = async (boardId) => {
   } catch (error) { throw new Error(error) }
 }
 
+const findDueCardsByUser = async (userId) => {
+  try {
+    const now = Date.now()
+    const userObjectId = new ObjectId(userId.toString())
+    const result = await GET_DB().collection(CARD_COLLECTION_NAME).aggregate([
+      {
+        $match: {
+          _destroy: false,
+          isDueDateComplete: false,
+          dueDate: { $ne: null },
+          $or: [
+            { memberIds: userObjectId },
+            { memberIds: userId.toString() }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'boards',
+          localField: 'boardId',
+          foreignField: '_id',
+          as: 'board'
+        }
+      }
+    ]).toArray()
+
+    const dueCards = []
+    for (const card of result) {
+      const isOverdue = now > card.dueDate
+      const reminderMinutes = card.reminderMinutes ?? 1440
+      const reminderTime = reminderMinutes !== null ? (card.dueDate - (reminderMinutes * 60 * 1000)) : null
+      const isReminderReached = reminderTime !== null && now >= reminderTime
+
+      if (isOverdue || isReminderReached) {
+        dueCards.push({
+          _id: `deadline_${card._id}`,
+          type: 'CARD_DEADLINE',
+          cardId: card._id.toString(),
+          boardId: card.boardId.toString(),
+          boardTitle: card.board[0]?.title || 'Untitled Board',
+          cardTitle: card.title,
+          dueDate: card.dueDate,
+          deadlineStatus: isOverdue ? 'OVERDUE' : 'DUE_SOON',
+          createdAt: card.dueDate
+        })
+      }
+    }
+
+    return dueCards
+  } catch (error) { throw error }
+}
+
 export const cardModel = {
   CARD_COLLECTION_NAME,
   CARD_COLLECTION_SCHEMA,
@@ -265,5 +317,6 @@ export const cardModel = {
   deleteAttachment,
   deleteOneById,
   updateMembers,
-  deleteManyByBoardId
+  deleteManyByBoardId,
+  findDueCardsByUser
 }
