@@ -211,10 +211,15 @@ const refreshToken = async (clientRefreshToken) => {
     // Verify / giải mã cái refresh token xem có hợp lệ không
     const refreshTokenDecoded = await jwtProvider.verifyToken(clientRefreshToken, env.REFRESH_TOKEN_SECRET_SIGNATURE)
 
-    // Đoạn này vì chúng ta chỉ lưu những thông tin unique và cố định của user trong token rồi, vì vậy có thể lấy luôn từ decoded ra, tiết kiệm query vào DB để lấy data mới.
+    // Kiểm tra xem user có thực sự còn tồn tại trong DB và chưa bị xóa / khóa tài khoản
+    const existUser = await userModel.findOneById(refreshTokenDecoded._id)
+    if (!existUser || existUser._destroy || !existUser.isActive) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Account not found or has been deactivated!')
+    }
+
     const userInfo = {
-      _id: refreshTokenDecoded._id,
-      email: refreshTokenDecoded.email
+      _id: existUser._id,
+      email: existUser.email
     }
 
     // Tạo accessToken mới

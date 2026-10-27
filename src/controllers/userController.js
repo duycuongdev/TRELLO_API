@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes'
 import { userService } from '~/services/userService'
 import ms from 'ms'
 import ApiError from '~/utils/ApiError'
+import { pickUser } from '~/utils/formatter'
 
 const createNew = async (req, res, next) => {
   try {
@@ -66,7 +67,7 @@ const refreshToken = async (req, res, next) => {
     })
     res.status(StatusCodes.OK).json(result)
   } catch (error) {
-    next(new ApiError(StatusCodes.FORBIDDEN, 'Please Sign In!'))
+    next(new ApiError(StatusCodes.UNAUTHORIZED, error?.message || 'Please Sign In!'))
   }
 }
 
@@ -79,11 +80,18 @@ const update = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getProfile = async (req, res, next) => {
+  try {
+    res.status(StatusCodes.OK).json(pickUser(req.currentUser))
+  } catch (error) { next(error) }
+}
+
 export const userController = {
   createNew,
   verifyAccount,
   login,
   logout,
   refreshToken,
-  update
+  update,
+  getProfile
 }

@@ -22,6 +22,9 @@ Router.route('/logout')
 Router.route('/refresh_token')
   .get(userController.refreshToken)
 
+Router.route('/me')
+  .get(authMiddleware.isAuthorized, userController.getProfile)
+
 Router.route('/update')
   .put(
     authMiddleware.isAuthorized,
