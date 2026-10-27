@@ -6,10 +6,15 @@ import { userModel } from '~/models/userModel'
 
 // Middleware này sẽ đảm nhiệm việc quan trọng: Xác thực cái JWT accessToken nhận được từ phía FE có hợp lệ hay không
 const isAuthorized = async (req, res, next) => {
-  // Lấy accessToken nằm trong request cookies phía client – withCredentials trong file authorizeAxios
-  const clientAccessToken = req.cookies?.accessToken
+  // Lấy accessToken từ cookie (HttpOnly) hoặc Authorization Header (Bearer token)
+  // Cơ chế Dual-Auth này giúp ứng dụng chạy hoàn hảo trên cả máy tính (hỗ trợ cookie cross-site)
+  // lẫn điện thoại di động (Safari/iOS, WebView thường chặn Third-party cookie).
+  let clientAccessToken = req.cookies?.accessToken
+  if (!clientAccessToken && req.headers?.authorization?.startsWith('Bearer ')) {
+    clientAccessToken = req.headers.authorization.split(' ')[1]
+  }
 
-  // Nếu không có accessToken trong request cookies thì trả về lỗi 401
+  // Nếu không có accessToken trong cả cookie lẫn header thì trả về lỗi 401
   if (!clientAccessToken) {
     next(new ApiError(StatusCodes.UNAUTHORIZED, 'Unauthorized, token not found'))
     return

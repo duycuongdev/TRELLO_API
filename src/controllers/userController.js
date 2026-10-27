@@ -80,7 +80,8 @@ const logout = async (req, res, next) => {
 
 const refreshToken = async (req, res, next) => {
   try {
-    const result = await userService.refreshToken(req.cookies?.refreshToken)
+    const clientRefreshToken = req.cookies?.refreshToken || req.headers['x-refresh-token'] || req.body?.refreshToken
+    const result = await userService.refreshToken(clientRefreshToken)
     res.cookie('accessToken', result.accessToken, {
       httpOnly: true,
       secure: true,
