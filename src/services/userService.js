@@ -99,7 +99,7 @@ const createNew = async (reqBody) => {
                     <table border="0" cellspacing="0" cellpadding="0" style="margin: 28px 0 10px 0;">
                       <tr>
                         <td align="center" style="border-radius: 6px;" bgcolor="#0052cc">
-                          <a href="${verifiCationLink}" target="_blank" style="font-size: 15px; font-family: inherit; color: #ffffff; text-decoration: none; border-radius: 6px; padding: 14px 32px; display: inline-block; font-weight: 600; letter-spacing: 0.2px;">
+                          <a href="${verifiCationLink}" target="_self" style="font-size: 15px; font-family: inherit; color: #ffffff; text-decoration: none; border-radius: 6px; padding: 14px 32px; display: inline-block; font-weight: 600; letter-spacing: 0.2px;">
                             Verify Email Address
                           </a>
                         </td>
