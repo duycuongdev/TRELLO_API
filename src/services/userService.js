@@ -9,6 +9,9 @@ import { brevoProvider } from '~/providers/BrevoProvider'
 import { jwtProvider } from '~/providers/JwtProvider'
 import { env } from '~/config/environment'
 import { cloudinaryProvider } from '~/providers/CloundinaryProvider'
+import { OAuth2Client } from 'google-auth-library'
+
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID)
 
 const createNew = async (reqBody) => {
   try {
@@ -267,10 +270,82 @@ const update = async (userId, reqBody, userAvatarFile) => {
   } catch (error) { throw error }
 }
 
+const googleLogin = async (reqBody) => {
+  try {
+    const { token } = reqBody
+
+    // Verify Google ID token
+    let googlePayload = null
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: token,
+        audience: env.GOOGLE_CLIENT_ID
+      })
+      googlePayload = ticket.getPayload()
+    } catch (_err) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid Google token!')
+    }
+
+    if (!googlePayload || !googlePayload.email || !googlePayload.email_verified) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Google account is unverified or invalid!')
+    }
+
+    const { email, name, picture } = googlePayload
+
+    // Tìm kiếm xem user đã tồn tại trong DB chưa
+    let existUser = await userModel.findOneByEmail(email)
+
+    if (existUser) {
+      // Nếu user đã tồn tại nhưng đã bị xóa / khóa tài khoản
+      if (existUser._destroy) {
+        throw new ApiError(StatusCodes.FORBIDDEN, 'Your account has been deleted!')
+      }
+
+      // Nếu user chưa active hoặc chưa có avatar, cập nhật từ thông tin Google
+      const updateData = {}
+      if (!existUser.isActive) updateData.isActive = true
+      if (!existUser.avatar && picture) updateData.avatar = picture
+      if (Object.keys(updateData).length > 0) {
+        existUser = await userModel.update(existUser._id, updateData)
+      }
+    } else {
+      // Nếu user chưa tồn tại, tự động tạo mới tài khoản với isActive = true
+      const username = email.split('@')[0]
+      const newUser = {
+        email,
+        password: bcrypt.hashSync(uuidv4(), 8), // Mật khẩu ngẫu nhiên an toàn cho tài khoản OAuth
+        username,
+        displayName: name || username,
+        avatar: picture || null,
+        role: 'client',
+        isActive: true
+      }
+      const createdUser = await userModel.createNew(newUser)
+      existUser = await userModel.findOneById(createdUser.insertedId)
+    }
+
+    // Tạo cặp token accessToken và refreshToken
+    const userInfo = { _id: existUser._id, email: existUser.email }
+    const accessToken = await jwtProvider.generateToken(
+      userInfo,
+      env.ACCESS_TOKEN_SECRET_SIGNATURE,
+      env.ACCESS_TOKEN_LIFE
+    )
+    const refreshToken = await jwtProvider.generateToken(
+      userInfo,
+      env.REFRESH_TOKEN_SECRET_SIGNATURE,
+      env.REFRESH_TOKEN_LIFE
+    )
+
+    return { ...pickUser(existUser), accessToken, refreshToken }
+  } catch (error) { throw error }
+}
+
 export const userService = {
   createNew,
   verifyAccount,
   login,
+  googleLogin,
   refreshToken,
   update
 }

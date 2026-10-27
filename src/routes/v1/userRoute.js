@@ -16,6 +16,9 @@ Router.route('/verify')
 Router.route('/login')
   .post(rateLimiterMiddleware.loginLimiter, userValidation.login, userController.login)
 
+Router.route('/google-login')
+  .post(rateLimiterMiddleware.loginLimiter, userValidation.googleLogin, userController.googleLogin)
+
 Router.route('/logout')
   .delete(userController.logout)
 
