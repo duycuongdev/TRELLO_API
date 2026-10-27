@@ -32,6 +32,7 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
     })
   ).default([]),
   dueDate: Joi.date().timestamp('javascript').allow(null).default(null),
+  reminderMinutes: Joi.number().integer().min(0).allow(null).default(1440),
   isDueDateComplete: Joi.boolean().default(false),
   attachments: Joi.array().items(
     Joi.object({

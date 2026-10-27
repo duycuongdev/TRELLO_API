@@ -43,6 +43,7 @@ const update = async (req, res, next) => {
       })
     ).optional(),
     dueDate: Joi.date().timestamp('javascript').allow(null).optional(),
+    reminderMinutes: Joi.number().integer().min(0).allow(null).optional(),
     isDueDateComplete: Joi.boolean().optional(),
     attachments: Joi.array().items(
       Joi.object({
