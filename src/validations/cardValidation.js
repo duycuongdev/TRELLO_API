@@ -37,7 +37,8 @@ const update = async (req, res, next) => {
           Joi.object({
             _id: Joi.string().optional(),
             title: Joi.string().required().trim(),
-            isDone: Joi.boolean().default(false)
+            isDone: Joi.boolean().default(false),
+            link: Joi.string().allow(null, '').optional()
           })
         ).default([])
       })

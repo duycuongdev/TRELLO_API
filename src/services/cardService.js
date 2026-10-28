@@ -182,7 +182,8 @@ const copyCard = async (cardId, reqBody) => {
         items: (cl.items || []).map(item => ({
           _id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
           title: item.title,
-          isDone: Boolean(item.isDone)
+          isDone: Boolean(item.isDone),
+          link: item.link || null
         }))
       }))
       : []

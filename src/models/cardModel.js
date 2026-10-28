@@ -26,7 +26,8 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
         Joi.object({
           _id: Joi.string().optional(),
           title: Joi.string().required().trim(),
-          isDone: Joi.boolean().default(false)
+          isDone: Joi.boolean().default(false),
+          link: Joi.string().allow(null, '').optional()
         })
       ).default([])
     })
@@ -258,13 +259,9 @@ const findDueCardsByUser = async (userId) => {
     const result = await GET_DB().collection(CARD_COLLECTION_NAME).aggregate([
       {
         $match: {
-          _destroy: false,
-          isDueDateComplete: false,
-          dueDate: { $ne: null },
-          $or: [
-            { memberIds: userObjectId },
-            { memberIds: userId.toString() }
-          ]
+          _destroy: { $ne: true },
+          isDueDateComplete: { $ne: true },
+          dueDate: { $ne: null }
         }
       },
       {
@@ -274,27 +271,41 @@ const findDueCardsByUser = async (userId) => {
           foreignField: '_id',
           as: 'board'
         }
+      },
+      {
+        $match: {
+          'board.0._destroy': { $ne: true },
+          $or: [
+            { memberIds: userObjectId },
+            { memberIds: userId.toString() },
+            { 'board.ownerIds': userObjectId },
+            { 'board.memberIds': userObjectId }
+          ]
+        }
       }
     ]).toArray()
 
     const dueCards = []
     for (const card of result) {
-      const isOverdue = now > card.dueDate
-      const reminderMinutes = card.reminderMinutes ?? 1440
-      const reminderTime = reminderMinutes !== null ? (card.dueDate - (reminderMinutes * 60 * 1000)) : null
+      const dueTimestamp = typeof card.dueDate === 'number' ? card.dueDate : new Date(card.dueDate).getTime()
+      if (isNaN(dueTimestamp)) continue
+
+      const isOverdue = now > dueTimestamp
+      const reminderMinutes = (card.reminderMinutes !== undefined && card.reminderMinutes !== null) ? Number(card.reminderMinutes) : 1440
+      const reminderTime = reminderMinutes !== null ? (dueTimestamp - (reminderMinutes * 60 * 1000)) : null
       const isReminderReached = reminderTime !== null && now >= reminderTime
 
       if (isOverdue || isReminderReached) {
         dueCards.push({
-          _id: `deadline_${card._id}`,
+          _id: `deadline_${card._id}_${dueTimestamp}_${isOverdue ? 'overdue' : 'due'}`,
           type: 'CARD_DEADLINE',
           cardId: card._id.toString(),
           boardId: card.boardId.toString(),
           boardTitle: card.board[0]?.title || 'Untitled Board',
           cardTitle: card.title,
-          dueDate: card.dueDate,
+          dueDate: dueTimestamp,
           deadlineStatus: isOverdue ? 'OVERDUE' : 'DUE_SOON',
-          createdAt: card.dueDate
+          createdAt: dueTimestamp
         })
       }
     }
