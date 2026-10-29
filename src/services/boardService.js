@@ -53,6 +53,11 @@ const getDetails = async (userId, boardId) => {
 
     delete resBoard.cards
 
+    // Đảm bảo slug luôn tồn tại kể cả với dữ liệu cũ
+    if (!resBoard.slug && resBoard.title) {
+      resBoard.slug = slugify(resBoard.title)
+    }
+
     return resBoard
   } catch (error) { throw error }
 }
@@ -62,6 +67,10 @@ const update = async (boardId, reqBody, boardBackgroundFile) => {
     const updateData = {
       ...reqBody,
       updatedAt: Date.now()
+    }
+
+    if (reqBody.title) {
+      updateData.slug = slugify(reqBody.title)
     }
 
     // Nếu người dùng upload file ảnh nền từ thiết bị, tải lên Cloudinary
