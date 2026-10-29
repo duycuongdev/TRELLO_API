@@ -85,7 +85,15 @@ const getInvitations = async (userId) => {
     // Lấy thêm các thông báo deadline (quá hạn hoặc sắp hết hạn) của user hiện tại
     const dueCards = await cardModel.findDueCardsByUser(userId)
 
-    return [...dueCards, ...resInvitations]
+    const allNotifications = [...dueCards, ...resInvitations]
+    // Sắp xếp thông báo mới nhất lên đầu tiên (createdAt giảm dần)
+    allNotifications.sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.dueDate || 0).getTime()
+      const timeB = new Date(b.createdAt || b.dueDate || 0).getTime()
+      return timeB - timeA
+    })
+
+    return allNotifications
   } catch (error) { throw error }
 }
 
