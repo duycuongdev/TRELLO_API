@@ -286,9 +286,9 @@ const findDueCardsByUser = async (userId) => {
           'board.0._destroy': { $ne: true },
           $or: [
             { memberIds: userObjectId },
-            { memberIds: userId.toString() },
-            { 'board.ownerIds': userObjectId },
-            { 'board.memberIds': userObjectId }
+            { memberIds: userId.toString() }
+
+
           ]
         }
       }
