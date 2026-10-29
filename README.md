@@ -1,4 +1,4 @@
-# ⚙️ Trello API - Backend RESTful Services & Real-time Socket Engine
+# ⚙️ Trello API - Backend RESTful Services & Real-Time Socket Engine
 
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Express.js](https://img.shields.io/badge/Express.js-4.x-000000?logo=express&logoColor=white)](https://expressjs.com/)
@@ -8,62 +8,61 @@
 [![Brevo](https://img.shields.io/badge/Brevo-Transactional%20Email-0092FF?logo=sendinblue&logoColor=white)](https://www.brevo.com/)
 [![Render](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?logo=render&logoColor=white)](https://trello-api-5hh5.onrender.com)
 
-> Hệ thống máy chủ **Backend RESTful API** và động cơ truyền thông thời gian thực (**Real-time WebSocket**) cho ứng dụng Trello Clone. Cung cấp kiến trúc dịch vụ bảo mật cao, mở rộng linh hoạt và đáp ứng hiệu năng cao cho hàng ngàn người dùng cộng tác.
+> Robust **Backend RESTful API** and **Real-Time WebSocket Engine** powering the Trello Clone platform. Provides a secure, scalable, and high-performance service architecture designed for seamless team collaboration.
 
 ---
 
-## 🌐 Production Endpoint
+## 🌐 Live Client & Application
 
-- 🚀 **Base API URL**: [https://trello-api-5hh5.onrender.com/v1](https://trello-api-5hh5.onrender.com/v1)
-- 🖥️ **Frontend Client**: [https://trello-web-tawny.vercel.app](https://trello-web-tawny.vercel.app)
+- 🖥️ **Web Application**: [https://trello-web-tawny.vercel.app](https://trello-web-tawny.vercel.app)
 
 ---
 
-## ⚡ Các Tính Năng Backend Chính (Key Backend Modules)
+## ⚡ Key Backend Modules
 
 1. **Dual-Auth Authentication & Authorization**:
-   - Tự động nhận diện token từ cả **HttpOnly Cookie** (`accessToken`) và HTTP Header (`Authorization: Bearer <token>`).
-   - Hỗ trợ cơ chế **Refresh Token Rotation**: Tự động cấp lại cặp token mới khi Access Token hết hạn, hỗ trợ header `x-refresh-token`.
-   - Giải quyết triệt để lỗi chặn Third-Party Cookies trên iOS Safari / Mobile ITP.
-   - Xác minh token Google OAuth 2.0 an toàn phía Server qua `google-auth-library`.
-2. **Cộng Tác Thời Gian Thực (Socket.IO)**:
-   - Quản lý phòng theo Board ID (`board:<boardId>`).
-   - Phát tán các sự kiện: Kéo thả cột, di chuyển thẻ, cập nhật nội dung, gửi lời mời người dùng, thông báo deadline tức thì.
-3. **Quản Lý Bảng & Dữ Liệu Kanban**:
-   - Cấu trúc dữ liệu phân cấp: **Board -> Columns -> Cards**.
-   - Hỗ trợ sắp xếp thứ tự bằng mảng ID (`columnOrderIds`, `cardOrderIds`).
-   - Xử lý kéo thả thẻ khác cột (cross-column drag) an toàn và tối ưu giao dịch dữ liệu.
-4. **Hệ Thống Lời Mời & Nhắc Nhở Hạn Chót (Invitations & Deadlines Aggregation)**:
-   - Tích hợp MongoDB Aggregation Pipeline tổng hợp đồng thời:
-     - Lời mời tham gia Board từ người dùng khác (`BOARD_INVITATION`).
-     - Thẻ công việc sắp hết hạn hoặc đã quá hạn được giao cho người dùng (`CARD_DEADLINE`).
-5. **Dịch Vụ Lưu Trữ & Email (Media & Communication)**:
-   - Tải lên tệp đính kèm và ảnh bìa thẻ trực tiếp lên Cloudinary với Multer memory storage.
-   - Gửi email kích hoạt tài khoản qua Brevo RESTful Transactional Email API.
+   - Automatically detects tokens from both **HttpOnly Cookies** (`accessToken`) and HTTP Request Headers (`Authorization: Bearer <token>`).
+   - Implements **Refresh Token Rotation**: seamlessly issues new token pairs upon expiration, supporting custom `x-refresh-token` headers.
+   - Eliminates third-party cookie blocking issues across iOS Safari / Mobile ITP.
+   - Server-side verification of Google OAuth 2.0 tokens using `google-auth-library`.
+2. **Real-Time Synchronization (Socket.IO)**:
+   - Dynamic room management keyed by Board ID (`board:<boardId>`).
+   - Broadcasts real-time events: column drag-and-drop, card movements, content updates, invitations, and deadline alerts.
+3. **Board & Kanban Data Management**:
+   - Hierarchical data architecture: **Board -> Columns -> Cards**.
+   - Ordered array tracking (`columnOrderIds`, `cardOrderIds`).
+   - Secure and optimized cross-column card drag transactions.
+4. **Invitations & Deadline Reminders Aggregation**:
+   - High-performance MongoDB Aggregation Pipeline combining:
+     - Board collaboration invites (`BOARD_INVITATION`).
+     - Approaching and overdue task deadlines assigned to the current user (`CARD_DEADLINE`).
+5. **Media Storage & Transactional Communication**:
+   - Direct attachments and card cover uploads to Cloudinary via Multer memory storage.
+   - User account activation emails dispatched via Brevo RESTful Transactional Email API.
 
 ---
 
-## 🛠 Kiến Trúc Thư Mục Backend
+## 🛠 Backend Directory Architecture
 
 ```text
 trello-api/
 ├── src/
-│   ├── config/               # Cấu hình môi trường (environment.js, cors.js, mongodb.js, cloudinary.js)
-│   ├── controllers/          # Nhận và phản hồi HTTP requests
+│   ├── config/               # Environment (environment.js, cors.js, mongodb.js, cloudinary.js)
+│   ├── controllers/          # HTTP request handlers
 │   │   ├── boardController.js
 │   │   ├── cardController.js
 │   │   ├── columnController.js
 │   │   ├── invitationController.js
 │   │   └── userController.js
-│   ├── middlewares/          # Middleware xác thực (authMiddleware), multer, error handler
-│   ├── models/               # MongoDB Data Access Layer & Schemas (Joi validation)
+│   ├── middlewares/          # Auth middleware (Dual-auth), multer, error handler
+│   ├── models/               # MongoDB Data Access Layer & Joi Schemas
 │   ├── providers/            # Brevo Email Provider, Cloudinary Provider
-│   ├── routes/v1/            # Khai báo các Route RESTful API theo phiên bản v1
-│   ├── services/             # Business Logic xử lý nghiệp vụ chính
+│   ├── routes/v1/            # RESTful API v1 router definitions
+│   ├── services/             # Core business logic services
 │   ├── sockets/              # Socket.IO Event Handlers
-│   ├── utils/                # Thuật toán, formatters, JWT tokens generator
+│   ├── utils/                # Algorithms, formatters, JWT generators
 │   ├── validations/          # Joi Request Validation Schemas
-│   └── server.js             # Khởi tạo Express Server & Socket.IO
+│   └── server.js             # Express Server & Socket.IO initialization
 ├── .env.example
 ├── package.json
 └── README.md
@@ -71,17 +70,17 @@ trello-api/
 
 ---
 
-## 🚀 Cài Đặt & Chạy Cục Bộ (Local Setup)
+## 🚀 Local Installation & Setup
 
 ```bash
-# 1. Cài đặt các thư viện
+# 1. Install dependencies
 npm install
 
-# 2. Tạo file cấu hình môi trường
+# 2. Create environment configuration
 cp .env.example .env
 ```
 
-Cấu hình các biến trong file `.env`:
+Configuration in `.env`:
 ```env
 LOCAL_DEV_APP_HOST=localhost
 LOCAL_DEV_APP_PORT=8017
@@ -110,22 +109,21 @@ CLOUDINARY_API_KEY=your_cloudinary_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
 ```
 
-Khởi chạy máy chủ:
+Start the server:
 ```bash
-# Chạy ở chế độ phát triển (Development với Nodemon & Babel)
+# Run in development mode (Nodemon & Babel)
 npm run dev
 
-# Build mã nguồn cho môi trường Production
+# Compile for production
 npm run build
 
-# Chạy bản build Production
+# Start production build
 npm run start
 ```
 
 ---
 
-## 👨‍💻 Tác Giả (Author)
+## 👨‍💻 Author
 
-- **Nguyễn Duy Cường** (*duycuongdev*)
+- **Nguyen Duy Cuong** (*duycuongdev*)
 - **GitHub**: [@duycuongdev](https://github.com/duycuongdev)
-
