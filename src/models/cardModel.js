@@ -27,7 +27,16 @@ const CARD_COLLECTION_SCHEMA = Joi.object({
           _id: Joi.string().optional(),
           title: Joi.string().required().trim(),
           isDone: Joi.boolean().default(false),
-          link: Joi.string().allow(null, '').optional()
+          link: Joi.string().allow(null, '').optional(),
+          fileName: Joi.string().allow(null, '').optional(),
+          attachments: Joi.array().items(
+            Joi.object({
+              _id: Joi.string().optional(),
+              url: Joi.string().required(),
+              fileName: Joi.string().allow(null, '').optional(),
+              isFile: Joi.boolean().default(false)
+            })
+          ).default([])
         })
       ).default([])
     })
@@ -314,6 +323,21 @@ const findDueCardsByUser = async (userId) => {
   } catch (error) { throw error }
 }
 
+const pullMemberFromAllCardsInBoard = async (boardId, userId) => {
+  try {
+    const userObjectId = new ObjectId(userId)
+    const result = await GET_DB().collection(CARD_COLLECTION_NAME).updateMany(
+      { boardId: new ObjectId(boardId) },
+      {
+        $pull: {
+          memberIds: { $in: [userObjectId, userId.toString()] }
+        }
+      }
+    )
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
 export const cardModel = {
   CARD_COLLECTION_NAME,
   CARD_COLLECTION_SCHEMA,
@@ -329,5 +353,6 @@ export const cardModel = {
   deleteOneById,
   updateMembers,
   deleteManyByBoardId,
-  findDueCardsByUser
+  findDueCardsByUser,
+  pullMemberFromAllCardsInBoard
 }

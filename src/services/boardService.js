@@ -127,6 +127,7 @@ const removeMember = async (currentUserId, boardId, targetUserId) => {
     }
 
     await boardModel.pullMemberIds(boardId, targetUserId)
+    await cardModel.pullMemberFromAllCardsInBoard(boardId, targetUserId)
     return { removeResult: 'Member removed successfully!' }
   } catch (error) { throw error }
 }

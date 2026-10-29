@@ -44,7 +44,8 @@ const addAttachment = async (req, res, next) => {
   try {
     const cardId = req.params.id
     const file = req.file
-    const updatedCard = await cardService.addAttachment(cardId, file)
+    const isChecklistOnly = req.query.isChecklistOnly === 'true'
+    const updatedCard = await cardService.addAttachment(cardId, file, isChecklistOnly)
     res.status(StatusCodes.OK).json(updatedCard)
   } catch (error) { next(error) }
 }

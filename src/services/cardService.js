@@ -109,7 +109,7 @@ const deleteComment = async (cardId, commentId, userId) => {
   } catch (error) { throw error }
 }
 
-const addAttachment = async (cardId, file) => {
+const addAttachment = async (cardId, file, isChecklistOnly = false) => {
   try {
     if (!file) throw new ApiError(StatusCodes.BAD_REQUEST, 'Please select a file to upload!')
     const uploadResult = await cloudinaryProvider.streamUpload(file.buffer, 'cardAttachments')
@@ -120,6 +120,9 @@ const addAttachment = async (cardId, file) => {
       fileType: file.mimetype,
       fileSize: file.size,
       uploadedAt: Date.now()
+    }
+    if (isChecklistOnly) {
+      return attachmentData
     }
     const updatedCard = await cardModel.unshiftNewAttachment(cardId, attachmentData)
     return updatedCard
@@ -183,7 +186,14 @@ const copyCard = async (cardId, reqBody) => {
           _id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
           title: item.title,
           isDone: Boolean(item.isDone),
-          link: item.link || null
+          link: item.link || null,
+          fileName: item.fileName || null,
+          attachments: (item.attachments || []).map(att => ({
+            _id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
+            url: att.url,
+            fileName: att.fileName || null,
+            isFile: Boolean(att.isFile)
+          }))
         }))
       }))
       : []

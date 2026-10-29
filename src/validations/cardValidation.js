@@ -38,7 +38,16 @@ const update = async (req, res, next) => {
             _id: Joi.string().optional(),
             title: Joi.string().required().trim(),
             isDone: Joi.boolean().default(false),
-            link: Joi.string().allow(null, '').optional()
+            link: Joi.string().allow(null, '').optional(),
+            fileName: Joi.string().allow(null, '').optional(),
+            attachments: Joi.array().items(
+              Joi.object({
+                _id: Joi.string().optional(),
+                url: Joi.string().required(),
+                fileName: Joi.string().allow(null, '').optional(),
+                isFile: Joi.boolean().default(false)
+              })
+            ).default([])
           })
         ).default([])
       })
