@@ -12,4 +12,15 @@ export const inviteUserToBoardSocket = (socket) => {
       socket.to(invitation.inviteeId.toString()).emit('BE_USER_INVITED_TO_BOARD', invitation)
     }
   })
+
+  // Lắng nghe sự kiện cập nhật deadline / hạn thẻ để báo cho các thành viên trong thẻ
+  socket.on('FE_CARD_DUE_DATE_CHANGED', ({ recipientIds, card, boardTitle }) => {
+    if (Array.isArray(recipientIds)) {
+      recipientIds.forEach((recipientId) => {
+        if (recipientId) {
+          socket.to(recipientId.toString()).emit('BE_CARD_DUE_DATE_CHANGED', { card, boardTitle })
+        }
+      })
+    }
+  })
 }
